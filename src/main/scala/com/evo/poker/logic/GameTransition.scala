@@ -10,7 +10,3 @@ case class Call(playerId: String)               extends GameTransition
 case class Raise(playerId: String, amount: Int) extends GameTransition
 case class Fold(playerId: String)               extends GameTransition
 case object Finish                              extends GameTransition
-
-object GameTransition {
-  def start() = ???
-}

@@ -1,4 +1,4 @@
-package com.evo.poker.model
+package com.evo.poker.logic
 
 import cats._
 import cats.instances.all._

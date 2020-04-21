@@ -3,7 +3,8 @@ package com.evo.poker.logic
 import cats._
 import cats.instances.all._
 import cats.syntax.all._
-import com.evo.poker.model.Card.Hand
+
+import com.evo.poker.logic.Card.Hand
 
 case class Player(
   id: String,

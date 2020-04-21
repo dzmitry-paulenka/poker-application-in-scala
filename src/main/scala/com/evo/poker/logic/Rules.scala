@@ -1,4 +1,4 @@
-package com.evo.poker.model
+package com.evo.poker.logic
 
 sealed abstract case class Rules private (
   handSize: Int,

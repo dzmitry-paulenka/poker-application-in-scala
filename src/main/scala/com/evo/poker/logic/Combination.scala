@@ -1,12 +1,13 @@
-package com.evo.poker.model
+package com.evo.poker.logic
 
 import cats._
 import cats.instances.all._
 import cats.syntax.all._
-import com.evo.poker.model.Rank._
-import com.evo.poker.model.Tier._
 
 import scala.collection.MapView
+
+import com.evo.poker.logic.Rank._
+import com.evo.poker.logic.Tier._
 
 sealed abstract class Tier(val value: Int)
 
@@ -58,7 +59,8 @@ object Combination {
       .mapValues { _.toList.sorted.reverse }
       .toMap
 
-    val rankListsSortedByCount: List[List[Rank]] = countToRanks.toList
+    val rankListsSortedByCount: List[List[Rank]] = countToRanks
+      .toList
       .sortBy(_._1)
       .reverse
       .map(_._2)

@@ -1,10 +1,11 @@
 package com.evo.poker.parser
 
-import com.evo.poker.model.Rank.{Four, Ten}
-import com.evo.poker.model.Suit.{Clubs, Spades}
-import com.evo.poker.model.{Card, Rules}
 import org.scalatest._
 import org.scalatest.matchers.should.Matchers
+
+import com.evo.poker.logic.Rank.{Four, Ten}
+import com.evo.poker.logic.Suit.{Clubs, Spades}
+import com.evo.poker.logic.{Card, Rules}
 
 class PokerParserTest extends FlatSpec with Matchers with EitherValues {
   private val texas = PokerParser.of(Rules.Texas)
@@ -21,6 +22,7 @@ class PokerParserTest extends FlatSpec with Matchers with EitherValues {
         Card(Ten, Spades),
         Card(Four, Clubs),
         Card(Ten, Spades)
-      ))
+      )
+    )
   }
 }

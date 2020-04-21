@@ -3,15 +3,15 @@ package com.evo.poker.logic
 import cats._
 import cats.instances.all._
 import cats.syntax.all._
-import com.evo.poker.model.Card.CardList
-import com.evo.poker.model.{Card, Deck, Rules}
-import com.evo.poker.parser.PokerParser
 import org.scalatest._
 import org.scalatest.matchers.should.Matchers
 
+import com.evo.poker.logic.Card.CardList
+import com.evo.poker.parser.PokerParser
+
 //noinspection ScalaDeprecation
 class GameTest extends FlatSpec with Matchers with EitherValues {
-  val rules = Rules.Texas
+  val rules  = Rules.Texas
   val parser = PokerParser.of(rules)
 
   val sb = rules.smallBlind

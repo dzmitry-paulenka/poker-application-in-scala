@@ -3,10 +3,10 @@ package com.evo.poker.logic
 import cats._
 import cats.instances.all._
 import cats.syntax.all._
-import com.evo.poker.model.Card.CardList
-import com.evo.poker.model.{Combination, Deck, Rules}
-import com.evo.poker.util.Util.ift
 import com.softwaremill.quicklens._
+
+import com.evo.poker.logic.Card.CardList
+import com.evo.poker.util.Util.ift
 
 case class PlayerCombination(player: Player, combination: Combination)
 

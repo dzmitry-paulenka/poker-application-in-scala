@@ -1,11 +1,12 @@
-package com.evo.poker.model
+package com.evo.poker.logic
 
 import cats._
 import cats.instances.all._
 import cats.syntax.all._
-import com.evo.poker.model.Card.CardList
 
 import scala.util.Random
+
+import com.evo.poker.logic.Card.CardList
 
 sealed abstract class Deck() {
   def reset(): Deck
@@ -46,8 +47,8 @@ object Deck {
     random(System.nanoTime())
 
   def random(seed: Long): Deck = {
-    val random = new Random(seed)
-    val cards = random.shuffle(Card.all)
+    val random    = new Random(seed)
+    val cards     = random.shuffle(Card.all)
     val resetSeed = random.nextLong()
 
     new RandomDeck(

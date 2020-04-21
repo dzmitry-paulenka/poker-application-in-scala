@@ -6,8 +6,9 @@ import atto._
 import cats._
 import cats.instances.all._
 import cats.syntax.all._
-import com.evo.poker.model.Card.{Board, CardList, Hand}
-import com.evo.poker.model.{Card, Rank, Rules, Suit}
+
+import com.evo.poker.logic.Card.{Board, CardList, Hand}
+import com.evo.poker.logic.{Card, Rank, Rules, Suit}
 
 sealed abstract case class PokerParser private (private val rules: Rules) {
   private val rank: Parser[Rank] =
