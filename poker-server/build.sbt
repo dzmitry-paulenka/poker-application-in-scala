@@ -1,4 +1,4 @@
-name := "evolution-gaming-scala-bootcamp-course-project"
+name := "poker-server"
 
 version := "0.1"
 

@@ -50,7 +50,7 @@ class HttpService(actorService: ActorService) {
   }
 
   def stop(): Unit = {
-    http.flatMap(_.terminate(hardDeadline = 10.seconds)).flatMap { _ =>
+    http.flatMap(_.terminate(hardDeadline = 3.seconds)).flatMap { _ =>
       system.terminate()
     }
   }

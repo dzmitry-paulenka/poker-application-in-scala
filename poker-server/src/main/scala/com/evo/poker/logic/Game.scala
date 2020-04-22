@@ -96,7 +96,7 @@ case class Game(
     var nActivePlayersCnt = 0
 
     val nPlayers = players.map { player =>
-      if (player.balance <= 0 || nActivePlayersCnt >= 10) {
+      if (player.balance <= 0 || nActivePlayersCnt >= 9) {
         player.sitOut()
       } else {
         val (hand, deck) = nDeck.deal(rules.handSize)
