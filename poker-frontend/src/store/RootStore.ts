@@ -1,4 +1,4 @@
-import BoxModel from 'app/store/BoxModel';
+import {GameStore} from 'app/store/GameStore';
 import {observable} from 'mobx';
 
 export class RootStore {
@@ -9,11 +9,7 @@ export class RootStore {
   public username: string = null;
 
   @observable
-  public boxes: Array<BoxModel> = [
-    new BoxModel(10, 10),
-    new BoxModel(200, 200),
-    new BoxModel(700, 400, 200)
-  ];
+  public game: GameStore = new GameStore();
 }
 
 export const rootStore = new RootStore();

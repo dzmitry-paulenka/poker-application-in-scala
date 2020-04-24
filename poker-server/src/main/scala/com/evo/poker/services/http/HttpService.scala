@@ -30,17 +30,17 @@ class HttpService(actorService: ActorService) {
   private implicit val circeConfig: Configuration = Configuration
     .default
     .withKebabCaseConstructorNames
-    .withDiscriminator("ctor-type")
+    .withDiscriminator("eventType")
 
-  private implicit val serverMsgCodec: Codec[ServerMessage] = deriveConfiguredCodec[ServerMessage]
-  private implicit val clientMsgCodec: Codec[ClientMessage] = deriveConfiguredCodec[ClientMessage]
+  private implicit val serverMsgCodec: Codec[ServerEvent]       = deriveConfiguredCodec[ServerEvent]
+  private implicit val clientMsgCodec: Codec[ClientEvent]       = deriveConfiguredCodec[ClientEvent]
   private implicit val gameTransitionCodec: Codec[GameTransition] = deriveConfiguredCodec[GameTransition]
 
   private var http: Future[Http.ServerBinding] = _
 
-  private val routes = pathPrefix("player-events" / Segment) { playerName =>
+  private val routes = pathPrefix("player-events" / Segment) { playerId =>
     handleWebSocketMessages(
-      handlePlayerConnection(playerName)
+      handlePlayerConnection(playerId)
     )
   }
 
@@ -55,14 +55,14 @@ class HttpService(actorService: ActorService) {
     }
   }
 
-  private def handlePlayerConnection(playerName: String): Flow[Message, Message, Any] = {
-    val playerActor: ActorRef = actorService.playerActor(playerName)
+  private def handlePlayerConnection(playerId: String): Flow[Message, Message, Any] = {
+    val playerActor: ActorRef = actorService.playerActor(playerId)
     val connectionId: String  = UUID.randomUUID().toString
 
     val (connectionRef: ActorRef, publisher: Publisher[TextMessage.Strict]) = {
       Source
-        .actorRef[ServerMessage](100000, OverflowStrategy.fail)
-        .map { message: ServerMessage =>
+        .actorRef[ServerEvent](100000, OverflowStrategy.fail)
+        .map { message: ServerEvent =>
           TextMessage.Strict(message.asJson.noSpaces)
         }
         .toMat(Sink.asPublisher(false))(Keep.both)
@@ -75,8 +75,8 @@ class HttpService(actorService: ActorService) {
           // TODO: ? handle chunked messages
           case TextMessage.Strict(json) =>
             // incoming message from websocket
-            decode[ClientMessage](json).map {
-              playerActor ! ConnectionMessage(connectionId, _)
+            decode[ClientEvent](json).map { msg =>
+              playerActor ! ConnectionEvent(connectionId, msg)
             }
 
           case bm: BinaryMessage =>

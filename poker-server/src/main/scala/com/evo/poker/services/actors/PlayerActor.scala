@@ -1,50 +1,67 @@
 package com.evo.poker.services.actors
 
 import akka.actor.{Actor, ActorRef}
-
-import com.evo.poker.logic.GameTransition
+import com.evo.poker.logic.{Game, GameTransition, PlayerTransition}
 import com.evo.poker.services.Services
 import com.evo.poker.services.actors.PlayerActor._
 
-class PlayerActor(val playerName: String) extends Actor {
+class PlayerActor(val playerId: String) extends Actor {
   private val actorService = Services.actor
+  private val lobbyActor   = actorService.lobbyActor
 
   private var balance: Int = 5000
 
-  // TODO: use this
-  private var activeGames = ???
+  private var activeGames: Vector[ActiveGame] = Vector()
+
+  private var currentGames = Map.empty[String, Game]
 
   private var connections: Map[String, ActorRef] = Map.empty[String, ActorRef]
 
   override def receive: Receive = {
     case Connected(connectionId, connectionRef) =>
-      println(s"[$playerName]: Connected [$connectionId]")
+      println(s"Player [$playerId]: New connection [$connectionId]")
       connections += connectionId -> connectionRef
+      connectionRef ! PlayerState(balance, currentGames, activeGames)
 
     case Disconnected(connectionId) =>
-      println(s"[$playerName]: Disconnected [$connectionId]")
+      println(s"Player [$playerId]: Disconnected [$connectionId]")
       connections -= connectionId
 
-    case ConnectionMessage(connectionId, clientMessage) =>
-      clientMessage match {
-        case ClientDataMessage(data) =>
-          println(s"[$playerName]: Conn[$connectionId]: $data")
-          broadcastMessage(ServerDataMessage(data))
+    case GameStateChanged(gameId, game) =>
+      if (game.players.exists(_.id == playerId)) {
+        currentGames += gameId -> game
+        broadcastMessage(GameState(gameId, game))
+      } else {
+        // TODO: remove games properly (update balance, etc...)
+        currentGames -= gameId
+        broadcastMessage(GameState(gameId, game))
+      }
 
-        case msg @ GetGameList() =>
-          actorService.lobbyActor ! msg
+    case ActiveGamesChanged(activeGames) =>
+      this.activeGames = activeGames
+      broadcastMessage(ActiveGames(activeGames))
 
-        case msg @ CreateGame(smallBlind) =>
-          actorService.lobbyActor ! msg
+    case ConnectionEvent(connectionId, clientEvent) =>
+      clientEvent match {
 
-        case Transition(gameId, gt) =>
-          ???
+        case CreateGame(name, smallBlind, buyIn) =>
+          lobbyActor ! LobbyActor.CreateGame(playerId, name, smallBlind, buyIn);
+
+        case Transition(gameId, gt) => {
+          actorService.gameActor(gameId).foreach { gameActor =>
+            gt match {
+              case p: PlayerTransition if p.playerId == playerId =>
+                gameActor ! GameActor.Transition(gt)
+              case _ =>
+            }
+          }
+        }
 
         case _ => // noop
       }
   }
 
-  def broadcastMessage(message: ServerMessage) = {
+  def broadcastMessage(message: ServerEvent) = {
     connections.values.foreach(_ ! message)
   }
 }
@@ -52,19 +69,24 @@ class PlayerActor(val playerName: String) extends Actor {
 object PlayerActor {
 
   sealed trait MessageIn
-  case class Connected(connectionId: String, connectionRef: ActorRef)        extends MessageIn
-  case class Disconnected(connectionId: String)                              extends MessageIn
-  case class ConnectionMessage(connectionId: String, message: ClientMessage) extends MessageIn
+  case class Connected(connectionId: String, connectionRef: ActorRef)  extends MessageIn
+  case class Disconnected(connectionId: String)                        extends MessageIn
+  case class ConnectionEvent(connectionId: String, event: ClientEvent) extends MessageIn
+  case class ActiveGamesChanged(activeGames: Vector[ActiveGame])       extends MessageIn
+  case class GameStateChanged(gameId: String, game: Game)              extends MessageIn
 
-  sealed trait ServerMessage
-  case class Ping(msg: String)               extends ServerMessage
-  case class ServerDataMessage(data: String) extends ServerMessage
+  sealed trait ServerEvent
+  case class Ping()                                       extends ServerEvent
+  case class ActiveGames(activeGames: Vector[ActiveGame]) extends ServerEvent
+  case class GameState(gameId: String, game: Game)        extends ServerEvent
+  case class PlayerState(
+    balance: Int,
+    games: Map[String, Game],
+    activeGames: Vector[ActiveGame]
+  ) extends ServerEvent
 
-  sealed trait ClientMessage
-  case class Pong(msg: String)                              extends ClientMessage
-  case class GetGameList()                                  extends ClientMessage
-  case class CreateGame(smallBlind: Int)                    extends ClientMessage
-  case class Transition(gameId: String, gt: GameTransition) extends ClientMessage
-
-  case class ClientDataMessage(data: String) extends ClientMessage
+  sealed trait ClientEvent
+  case class Pong()                                                extends ClientEvent
+  case class CreateGame(name: String, smallBlind: Int, buyIn: Int) extends ClientEvent
+  case class Transition(gameId: String, gt: GameTransition)        extends ClientEvent
 }

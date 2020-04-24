@@ -20,3 +20,8 @@ class GameActor(val gameId: String, val smallBlind: Int) extends Actor {
 
   }
 }
+
+object GameActor {
+  sealed trait MessageIn
+  case class Transition(gt: GameTransition) extends MessageIn
+}

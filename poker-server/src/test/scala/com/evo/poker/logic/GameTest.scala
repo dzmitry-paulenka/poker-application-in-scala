@@ -17,7 +17,12 @@ class GameTest extends FlatSpec with Matchers with EitherValues {
   val sb = rules.smallBlind
   val bb = rules.bigBlind
 
-//  it should "start correctly" in {
+  implicit class UnsafeGameOpts(g: Game) {
+    def player(id: String): Player =
+      g.requirePlayer(id).right.value
+  }
+
+  //  it should "start correctly" in {
 //    assertValidGame {
 //      for {
 //        g <- sampleGame(3)

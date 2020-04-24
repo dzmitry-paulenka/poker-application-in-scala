@@ -4,16 +4,12 @@ import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import {hot} from 'react-hot-loader/root';
 
+const bootstrap = async () => {
+  cls.initialize();
 
-cls.initialize();
+  const rootElement = document.getElementById('root');
+  const App = hot(({}) => (<Root/>));
+  ReactDOM.render(<App/>, rootElement);
+};
 
-
-// render react DOM
-const App = hot(({}) => (
-  <Root/>
-));
-
-ReactDOM.render(
-  <App/>,
-  document.getElementById('root')
-);
+bootstrap();

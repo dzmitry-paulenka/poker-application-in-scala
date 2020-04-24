@@ -28,12 +28,9 @@ case class Game(
   lazy val dealerPlayer: Player =
     activePlayers(dealerPlayerIndex)
 
-  lazy val activePlayers = {
+  lazy val activePlayers: Vector[Player] = {
     players.filterNot(_.sittingOut)
   }
-
-  def player(playerId: String): Player =
-    players.find(_.id == playerId).get
 
   def activePlayer(playerId: String): Player =
     activePlayers.find(_.id == playerId).get

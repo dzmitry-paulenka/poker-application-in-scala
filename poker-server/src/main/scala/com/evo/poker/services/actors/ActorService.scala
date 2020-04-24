@@ -27,14 +27,18 @@ class ActorService {
 
   }
 
-  def playerActor(playerName: String): ActorRef = {
+  def gameActor(gameId: String): Option[ActorRef] = {
+    ???
+  }
+
+  def playerActor(playerId: String): ActorRef = {
     // todo: not thread-safe
-    playerHandlers.get(playerName) match {
+    playerHandlers.get(playerId) match {
       case Some(ref) => ref
       case None => {
-        println(s"Creating new actor for $playerName")
-        val ref = system.actorOf(Props(classOf[PlayerActor], playerName))
-        playerHandlers += playerName -> ref
+        println(s"Creating new actor for $playerId")
+        val ref = system.actorOf(Props(classOf[PlayerActor], playerId))
+        playerHandlers += playerId -> ref
         ref
       }
     }

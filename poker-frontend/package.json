@@ -52,7 +52,9 @@
     "react": "^16.7.0",
     "react-dom": "^16.7.0",
     "react-router": "^4.3.1",
+    "reconnecting-websocket": "^4.4.0",
     "semantic-ui-css": "^2.4.1",
-    "semantic-ui-react": "^0.88.2"
+    "semantic-ui-react": "^0.88.2",
+    "serializr": "^2.0.3"
   }
 }
