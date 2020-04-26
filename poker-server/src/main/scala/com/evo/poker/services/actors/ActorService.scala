@@ -10,35 +10,34 @@ class ActorService {
   implicit val executionContext: ExecutionContextExecutor = system.dispatcher
   implicit val materializer: Materializer                 = Materializer.matFromSystem
 
-  var playerHandlers: Map[String, ActorRef] = Map.empty[String, ActorRef]
+  var playerActors: Map[String, ActorRef] = Map.empty[String, ActorRef]
+
+  var lobbyActor: ActorRef = _
 
   def init(): Unit = {
-    // TODO: init some actors
-    val actorReg = null
+    lobbyActor = system.actorOf(Props(classOf[LobbyActor]))
   }
 
   def stop(): Unit = {
     system.terminate()
   }
 
-  // TODO: make this a `val` ?
-  def lobbyActor: ActorRef = {
-    ???
-
+  def subscribe(subscriber: ActorRef, eventClass: Class[_]): Boolean = {
+    system.eventStream.subscribe(subscriber, eventClass)
   }
 
-  def gameActor(gameId: String): Option[ActorRef] = {
-    ???
+  def publish(event: Any): Unit = {
+    system.eventStream.publish(event)
   }
 
   def playerActor(playerId: String): ActorRef = {
     // todo: not thread-safe
-    playerHandlers.get(playerId) match {
+    playerActors.get(playerId) match {
       case Some(ref) => ref
       case None => {
         println(s"Creating new actor for $playerId")
         val ref = system.actorOf(Props(classOf[PlayerActor], playerId))
-        playerHandlers += playerId -> ref
+        playerActors += playerId -> ref
         ref
       }
     }

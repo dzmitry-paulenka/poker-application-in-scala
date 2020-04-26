@@ -6,13 +6,16 @@ export class GamesController {
 
   @action.bound
   public init() {
-    cls.connection.listenEvents('game-list', event => {
+    cls.connection.listenEvents('player-state', event => {
+
+    });
+
+    cls.connection.listenEvents('active-games-state', event => {
 
     });
 
     cls.connection.listenEvents('game-state', event => {
 
     });
-
   }
 }

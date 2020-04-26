@@ -1,4 +1,3 @@
-import BoxModel from 'app/store/BoxModel';
 import {observer} from 'mobx-react';
 import * as React from 'react';
 import * as style from './GameView.css';

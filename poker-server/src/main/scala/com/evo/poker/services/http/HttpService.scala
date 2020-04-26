@@ -8,9 +8,6 @@ import akka.http.scaladsl.model.ws.{BinaryMessage, Message, TextMessage}
 import akka.http.scaladsl.server.Directives._
 import akka.stream.OverflowStrategy
 import akka.stream.scaladsl.{Flow, Keep, Sink, Source}
-import io.circe.Codec
-import io.circe.generic.extras.Configuration
-import io.circe.generic.extras.semiauto.deriveConfiguredCodec
 import io.circe.parser.decode
 import io.circe.syntax._
 import org.reactivestreams.Publisher
@@ -18,23 +15,14 @@ import org.reactivestreams.Publisher
 import scala.concurrent.Future
 import scala.concurrent.duration._
 
-import com.evo.poker.logic.GameTransition
 import com.evo.poker.services.actors.ActorService
 import com.evo.poker.services.actors.PlayerActor._
+import com.evo.poker.services.http.Codecs._
 
 class HttpService(actorService: ActorService) {
   implicit val system           = actorService.system
   implicit val executionContext = actorService.executionContext
   implicit val materializer     = actorService.materializer
-
-  private implicit val circeConfig: Configuration = Configuration
-    .default
-    .withKebabCaseConstructorNames
-    .withDiscriminator("eventType")
-
-  private implicit val serverMsgCodec: Codec[ServerEvent]       = deriveConfiguredCodec[ServerEvent]
-  private implicit val clientMsgCodec: Codec[ClientEvent]       = deriveConfiguredCodec[ClientEvent]
-  private implicit val gameTransitionCodec: Codec[GameTransition] = deriveConfiguredCodec[GameTransition]
 
   private var http: Future[Http.ServerBinding] = _
 

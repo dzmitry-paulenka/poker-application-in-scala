@@ -9,7 +9,7 @@ import org.scalatest.matchers.should.Matchers
 import com.evo.poker.parser.PokerParser
 
 class CombinationTest extends FlatSpec with Matchers {
-  private val texas = PokerParser.of(Rules.Texas)
+  private val texas = PokerParser.of(Rules.texas())
 
   "Combination" should "correctly determine tier" in {
     parseCombo("Qs2dQc2sQh").map(_.tier) shouldBe Right(Tier.FullHouse)

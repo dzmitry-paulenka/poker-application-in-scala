@@ -9,10 +9,12 @@ object Services {
   lazy val http  = new HttpService(actor)
 
   def init() = {
+    actor.init()
     http.init()
   }
 
   def stop() = {
+    actor.stop()
     http.stop()
   }
 }

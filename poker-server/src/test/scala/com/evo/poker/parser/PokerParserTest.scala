@@ -8,7 +8,7 @@ import com.evo.poker.logic.Suit.{Clubs, Spades}
 import com.evo.poker.logic.{Card, Rules}
 
 class PokerParserTest extends FlatSpec with Matchers with EitherValues {
-  private val texas = PokerParser.of(Rules.Texas)
+  private val texas = PokerParser.of(Rules.texas())
 
   "Parser" should "parse cards" in {
     texas.parseCard("4c") shouldBe Right(Card(Four, Clubs))

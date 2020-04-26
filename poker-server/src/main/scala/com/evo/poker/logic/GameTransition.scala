@@ -1,13 +1,16 @@
 package com.evo.poker.logic
 
 sealed trait GameTransition
-case object Deal   extends GameTransition
-case object Finish extends GameTransition
+case object Deal      extends GameTransition
+case object NextRound extends GameTransition
+case object End       extends GameTransition
 
-sealed case class PlayerTransition(playerId: String) extends GameTransition
-case class Join(override val playerId: String, balance: Int) extends PlayerTransition(playerId)
-case class Leave(override val playerId: String)              extends PlayerTransition(playerId)
-case class Check(override val playerId: String)              extends PlayerTransition(playerId)
-case class Call(override val playerId: String)               extends PlayerTransition(playerId)
-case class Raise(override val playerId: String, amount: Int) extends PlayerTransition(playerId)
-case class Fold(override val playerId: String)               extends PlayerTransition(playerId)
+sealed trait PlayerTransition extends GameTransition {
+  val playerId: String
+}
+case class Join(playerId: String)               extends PlayerTransition
+case class Leave(playerId: String)              extends PlayerTransition
+case class Check(playerId: String)              extends PlayerTransition
+case class Call(playerId: String)               extends PlayerTransition
+case class Raise(playerId: String, amount: Int) extends PlayerTransition
+case class Fold(playerId: String)               extends PlayerTransition

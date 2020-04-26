@@ -5,22 +5,17 @@ sealed abstract case class Rules private (
   minHandUse: Int,
   maxHandUse: Int,
   boardSize: Int,
-  smallBlind: Int = 10
+  playersLimit: Int,
+  smallBlind: Int,
+  buyIn: Int
 ) {
-  val bigBlind       = smallBlind * 2
-  val minimumBalance = smallBlind * 20
+  val bigBlind: Int = smallBlind * 2
 }
 
 object Rules {
-  val Texas: Rules = Rules.texas(1)
-  val Omaha: Rules = Rules.omaha(1)
 
-  def texas(smallBlind: Int) = {
-    of(2, 0, 2, smallBlind = smallBlind)
-  }
-
-  def omaha(smallBlind: Int) = {
-    of(4, 2, 2, smallBlind = smallBlind)
+  def texas(smallBlind: Int = 1, buyIn: Int = 20): Rules = {
+    of(2, 0, 2, smallBlind = smallBlind, buyIn = buyIn)
   }
 
   private def of(
@@ -28,7 +23,9 @@ object Rules {
     minHandUse: Int,
     maxHandUse: Int,
     boardSize: Int = 5,
-    smallBlind: Int
+    playersLimit: Int = 9,
+    smallBlind: Int = 10,
+    buyIn: Int = 200
   ): Rules = {
     require(minHandUse + boardSize >= 5)
 
@@ -39,6 +36,8 @@ object Rules {
     require(handSize >= minHandUse)
     require(handSize >= maxHandUse)
 
-    new Rules(handSize, minHandUse, maxHandUse, boardSize, smallBlind) {}
+    require(buyIn >= smallBlind * 10)
+
+    new Rules(handSize, minHandUse, maxHandUse, boardSize, playersLimit, smallBlind, buyIn) {}
   }
 }

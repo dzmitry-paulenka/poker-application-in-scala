@@ -1,5 +1,4 @@
 import {cls} from 'app/controller/Controllers';
-import BoxModel from 'app/store/BoxModel';
 import {rootStore} from 'app/store/RootStore';
 import bind from 'bind-decorator';
 import {observer} from 'mobx-react';

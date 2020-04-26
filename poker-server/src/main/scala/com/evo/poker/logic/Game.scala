@@ -75,13 +75,14 @@ case class Game(
   def transition(transition: GameTransition): OrError[Game] = {
     transition match {
       case Deal                    => deal()
-      case Join(playerId, balance) => join(playerId, balance)
+      case Join(playerId)          => join(playerId)
       case Leave(playerId)         => leave(playerId)
       case Check(playerId)         => check(playerId)
       case Call(playerId)          => call(playerId)
       case Raise(playerId, amount) => raise(playerId, amount)
       case Fold(playerId)          => fold(playerId)
-      case Finish                  => finish()
+      case NextRound               => nextRound()
+      case End                     => finish()
     }
   }
 
@@ -93,7 +94,7 @@ case class Game(
     var nActivePlayersCnt = 0
 
     val nPlayers = players.map { player =>
-      if (player.balance <= 0 || nActivePlayersCnt >= 9) {
+      if (player.balance <= 0) {
         player.sitOut()
       } else {
         val (hand, deck) = nDeck.deal(rules.handSize)
@@ -104,8 +105,8 @@ case class Game(
       }
     }
 
-    if (nActivePlayersCnt < 3)
-      return "Game can only be started with at least 3 players".asLeft
+    if (nActivePlayersCnt < 2)
+      return "Game can only be started with at least 2 players with positive balance".asLeft
 
     val nActivePlayers = nPlayers.filterNot(_.sittingOut)
 
@@ -150,15 +151,18 @@ case class Game(
     } yield ng
   }
 
-  def join(playerId: String, balance: Int): OrError[Game] = {
-    if (balance < rules.minimumBalance)
-      return s"Joining player balance ($balance) should be at least ${rules.minimumBalance}".asLeft
+  def join(playerId: String): OrError[Game] = {
+    if (phase == Ended)
+      return s"Can't join after the game is ended".asLeft
 
     if (players.exists(_.id == playerId))
       return this.asRight
 
+    if (players.size == rules.playersLimit)
+      return s"Game already has the maximum number of players".asLeft
+
     copy(
-      players = players :+ Player(playerId, balance).sitOut()
+      players = players :+ Player(playerId, rules.buyIn).sitOut()
     ).asRight
   }
 
@@ -264,7 +268,7 @@ case class Game(
     } yield ng
   }
 
-  def finish(): OrError[Game] = {
+  def nextRound(): OrError[Game] = {
     if (phase != Showdown)
       return s"Can't finish in phase $phase".asLeft
 
@@ -279,9 +283,15 @@ case class Game(
     ).asRight
   }
 
+  def finish(): OrError[Game] = {
+    copy(
+      phase = Ended
+    ).asRight
+  }
+
   private def makeProgress(): OrError[Game] = {
     val allActed     = activePlayers.forall(_.actedInRound)
-    val nPhase       = ift(allActed, Phase.next(phase), phase)
+    val nPhase       = ift(allActed, Phase.nextPlayable(phase), phase)
     val phaseChanged = phase != nPhase
 
     if (nPhase == Showdown || activePlayers.length < 2) {
@@ -365,7 +375,6 @@ case class Game(
 
     PlayerCombination(player, combos.max)
   }
-
 }
 
 object Game {

@@ -11,7 +11,7 @@ import com.evo.poker.parser.PokerParser
 
 //noinspection ScalaDeprecation
 class GameTest extends FlatSpec with Matchers with EitherValues {
-  val rules  = Rules.Texas
+  val rules  = Rules.texas(smallBlind = 1, buyIn = 100)
   val parser = PokerParser.of(rules)
 
   val sb = rules.smallBlind
@@ -22,25 +22,25 @@ class GameTest extends FlatSpec with Matchers with EitherValues {
       g.requirePlayer(id).right.value
   }
 
-  //  it should "start correctly" in {
-//    assertValidGame {
-//      for {
-//        g <- sampleGame(3)
-//        g <- g.deal()
-//        g <- validate(g) { g =>
-//          g.phase shouldBe PreFlop
-//          g.players.size shouldBe 3
-//
-//          g.player("a") shouldBe g.currentPlayer
-//          g.player("b").balance shouldBe (100 - sb)
-//          g.player("c").balance shouldBe (100 - bb)
-//
-//          g.pot shouldBe (sb + bb)
-//          g.roundBet shouldBe bb
-//        }
-//      } yield g
-//    }
-//  }
+  it should "start correctly" in {
+    assertValidGame {
+      for {
+        g <- sampleGame(3)
+        g <- g.deal()
+        g <- validate(g) { g =>
+          g.phase shouldBe PreFlop
+          g.players.size shouldBe 3
+
+          g.player("a") shouldBe g.currentPlayer
+          g.player("b").balance shouldBe (100 - sb)
+          g.player("c").balance shouldBe (100 - bb)
+
+          g.pot shouldBe (sb + bb)
+          g.roundBet shouldBe bb
+        }
+      } yield g
+    }
+  }
 
   it should "play out correctly 1" in {
     assertValidGame {
@@ -122,7 +122,7 @@ class GameTest extends FlatSpec with Matchers with EitherValues {
           g.currentPlayerIndex shouldBe -1
         }
 
-        g <- g.finish()
+        g <- g.nextRound()
         g <- g.leave("a")
         g <- validate(g) { g =>
           g.phase shouldBe PreDeal
@@ -170,7 +170,7 @@ class GameTest extends FlatSpec with Matchers with EitherValues {
   def sampleGame(playerCnt: Int, deckString: String = ""): OrError[Game] =
     constructGame(
       if (deckString.isEmpty) randomGame() else gameFromDeck(deckString),
-      (0 until playerCnt).map(i => g => g.join(('a' + i).toChar.toString, 100))
+      (0 until playerCnt).map(i => g => g.join(('a' + i).toChar.toString))
     )
 
   def constructGame(initial: OrError[Game], play: Seq[Game => OrError[Game]]): OrError[Game] = {
