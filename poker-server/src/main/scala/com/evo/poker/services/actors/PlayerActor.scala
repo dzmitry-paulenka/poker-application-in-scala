@@ -1,13 +1,16 @@
 package com.evo.poker.services.actors
 
 import akka.actor.{Actor, ActorRef, Timers}
+import cats._
+import cats.instances.all._
+import cats.syntax.all._
 
 import scala.concurrent.duration._
 
-import com.evo.poker.logic.{GameTransition, PlayerTransition}
+import com.evo.poker.logic._
 import com.evo.poker.services.Services
 import com.evo.poker.services.actors.PlayerActor._
-import com.evo.poker.services.models.{ActiveGame, ErrorMessage, GameProjection}
+import com.evo.poker.services.models.{ActiveGame, GameProjection}
 
 class PlayerActor(val playerId: String) extends Actor with Timers {
   private val actorService = Services.actor
@@ -15,8 +18,21 @@ class PlayerActor(val playerId: String) extends Actor with Timers {
 
   private var balance: Int = 5000
 
-  private var currentGames: Map[String, GameProjection] = Map.empty
-  private var currentGameActors: Map[String, ActorRef]  = Map.empty
+//  private var currentGames: Vector[GameProjection] = Vector.empty
+  private var currentGames: Vector[GameProjection] = {
+    val game = (for {
+      g <- Game.create(Rules.texas(), Deck.random()).asRight
+      g <- g.join(playerId)
+      g <- g.join("other")
+      g <- g.deal()
+    } yield g).right.get
+
+    val projection = GameProjection.of(playerId, "game1", game)
+
+    Vector(projection)
+  }
+
+  private var currentGameActors: Map[String, ActorRef] = Map.empty
 
   private var connections: Map[String, ActorRef] = Map.empty[String, ActorRef]
 
@@ -47,14 +63,21 @@ class PlayerActor(val playerId: String) extends Actor with Timers {
       broadcastMessage(ActiveGamesState(activeGames))
 
     case GameActor.GameStateChanged(gameRef, gameId, game) =>
+      val gameIndex      = currentGames.indexWhere(_.id == gameId)
+      val gameProjection = GameProjection.of(playerId, gameId, game)
+
       if (game.players.exists(_.id == playerId)) {
-        currentGames += gameId -> GameProjection.of(playerId, game)
+        if (gameIndex >= 0) {
+          currentGames = currentGames.updated(gameIndex, gameProjection);
+        } else {
+          currentGames :+= gameProjection
+        }
         currentGameActors += gameId -> gameRef
-        broadcastMessage(GameState(gameId, GameProjection.of(playerId, game)))
-      } else if (currentGames.contains(gameId)) {
+        broadcastMessage(GameState(gameId, gameProjection))
+      } else if (gameIndex >= 0) {
         // TODO: remove games properly (update balance, etc...)
-        currentGames -= gameId
-        broadcastMessage(GameState(gameId, GameProjection.of(playerId, game)))
+        currentGames = currentGames.filterNot(_.id == gameId)
+        broadcastMessage(GameState(gameId, gameProjection))
       }
 
     case GameActor.GameTransitionError(_, _, error, correlationData) =>
@@ -108,14 +131,15 @@ object PlayerActor {
   case object PingClients                                              extends MessageIn
 
   sealed trait ClientEvent
-  case object Pong                                                        extends ClientEvent
-  case class BuyChipsCommand(amount: Int)                                 extends ClientEvent
-  case class CreateGameCommand(name: String, smallBlind: Int, buyIn: Int) extends ClientEvent
-  case class TransitionCommand(gameId: String, gt: GameTransition)        extends ClientEvent
+  case object Pong                                                         extends ClientEvent
+  case class BuyChipsCommand(amount: Int)                                  extends ClientEvent
+  case class CreateGameCommand(name: String, smallBlind: Int, buyIn: Int)  extends ClientEvent
+  case class TransitionCommand(gameId: String, transition: GameTransition) extends ClientEvent
 
   sealed trait ServerEvent
-  case object Ping                                                         extends ServerEvent
-  case class PlayerState(balance: Int, games: Map[String, GameProjection]) extends ServerEvent
-  case class ActiveGamesState(activeGames: Vector[ActiveGame])             extends ServerEvent
-  case class GameState(gameId: String, game: GameProjection)               extends ServerEvent
+  case object Ping                                                    extends ServerEvent
+  case class PlayerState(balance: Int, games: Vector[GameProjection]) extends ServerEvent
+  case class ActiveGamesState(activeGames: Vector[ActiveGame])        extends ServerEvent
+  case class GameState(gameId: String, game: GameProjection)          extends ServerEvent
+  case class ErrorMessage(error: String)                              extends ServerEvent
 }

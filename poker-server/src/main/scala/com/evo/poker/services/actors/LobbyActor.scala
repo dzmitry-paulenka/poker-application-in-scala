@@ -37,7 +37,7 @@ class LobbyActor extends Actor {
           activeGames = activeGames.filterNot(_.id == gameId)
           gameRef ! PoisonPill
         } else {
-          val activeGame = activeGames(index).copy(playersCount = game.players.size)
+          val activeGame = activeGames(index).copy(playerCount = game.players.size)
           activeGames = activeGames.updated(index, activeGame)
         }
         publishActiveGames()

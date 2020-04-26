@@ -1,13 +1,14 @@
 package com.evo.poker.services.models
 
-import io.circe.generic.extras.ConfiguredJsonCodec
+import io.circe.generic.JsonCodec
+
 import com.evo.poker.services.http.Codecs._
 
-@ConfiguredJsonCodec
+@JsonCodec
 case class ActiveGame(
   id: String,
   name: String,
   smallBlind: Int,
   buyIn: Int,
-  playersCount: Int
+  playerCount: Int
 )

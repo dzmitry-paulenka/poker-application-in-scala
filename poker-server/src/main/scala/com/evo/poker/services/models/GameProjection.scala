@@ -1,14 +1,13 @@
 package com.evo.poker.services.models
 
-import io.circe.generic.extras.ConfiguredJsonCodec
+import io.circe.generic.JsonCodec
 
-import com.evo.poker.logic.Card.{Board, CardList, Hand}
-import com.evo.poker.logic.{Card, Game, Phase, Player, PreDeal, Showdown}
+import com.evo.poker.logic.Card.Hand
+import com.evo.poker.logic.{Card, Game, Phase, Showdown}
 import com.evo.poker.services.http.Codecs._
-import com.evo.poker.util.Util
 import com.evo.poker.util.Util.ift
 
-@ConfiguredJsonCodec
+@JsonCodec
 case class PlayerProjection(
   id: String,
   balance: Int = 0,
@@ -21,8 +20,9 @@ case class PlayerProjection(
   sittingOut: Boolean = true
 )
 
-@ConfiguredJsonCodec
+@JsonCodec
 case class GameProjection(
+  id: String,
   phase: Phase,
   board: List[Card],
   pot: Int,
@@ -30,10 +30,10 @@ case class GameProjection(
   players: Vector[PlayerProjection],
   currentPlayerIndex: Int,
   dealerPlayerIndex: Int
-) {}
+)
 
 object GameProjection {
-  def of(playerId: String, game: Game): GameProjection = {
+  def of(playerId: String, gameId: String, game: Game): GameProjection = {
     val players = game.players.map { player =>
       val handToSend = ift(playerId == player.id || game.phase == Showdown, player.hand, Nil)
       PlayerProjection(
@@ -50,6 +50,7 @@ object GameProjection {
     }
 
     GameProjection(
+      id = gameId,
       game.phase,
       game.board,
       game.pot,
