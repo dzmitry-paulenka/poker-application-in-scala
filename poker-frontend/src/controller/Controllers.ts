@@ -1,15 +1,16 @@
 import {ConnectionController} from 'app/controller/ConnectionController';
 import {GamesController} from 'app/controller/GamesController';
 import {ProfileController} from 'app/controller/ProfileController';
+import {UiController} from 'app/controller/UiController';
 
 export class Controllers {
   public readonly profile = new ProfileController();
   public readonly connection = new ConnectionController();
   public readonly games = new GamesController();
+  public readonly ui = new UiController();
 
   public initialize() {
     this.profile.init();
-    this.connection.init();
     this.games.init();
   }
 }

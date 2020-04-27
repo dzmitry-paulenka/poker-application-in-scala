@@ -33,6 +33,7 @@ class CodecsTest extends FlatSpec with GameTestHelper {
       """
         {
           "id" : "game1",
+          "name" : "noname",
           "phase" : "pre-flop",
           "board" : [],
           "pot" : 3,

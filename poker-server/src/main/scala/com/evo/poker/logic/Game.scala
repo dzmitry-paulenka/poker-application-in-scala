@@ -11,6 +11,7 @@ import com.evo.poker.util.Util.ift
 case class PlayerCombination(player: Player, combination: Combination)
 
 case class Game(
+  name: String,
   rules: Rules,
   deck: Deck,
   phase: Phase = PreDeal,
@@ -277,6 +278,7 @@ case class Game(
     )
 
     Game(
+      name = name,
       rules = rules,
       deck = deck.reset(),
       players = nPlayers
@@ -378,7 +380,7 @@ case class Game(
 }
 
 object Game {
-  def create(rules: Rules, deck: Deck): Game = {
-    Game(rules, deck)
+  def create(rules: Rules, deck: Deck, name: String = "noname"): Game = {
+    Game(name, rules, deck)
   }
 }

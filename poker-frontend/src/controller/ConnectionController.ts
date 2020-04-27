@@ -5,12 +5,52 @@ import ReconnectingWebSocket from 'reconnecting-websocket';
 
 export type EventListener<T> = (event: T) => void;
 
+export interface ClientEvent {
+  eventType: string;
+}
+
+export class Pong implements ClientEvent {
+  public readonly eventType: string = 'pong';
+}
+
+export class BuyChipsCommand implements ClientEvent {
+  public readonly eventType: string = 'buy-chips-command';
+
+  constructor(public readonly amount: number) {
+  }
+}
+
+export class CreateGameCommand implements ClientEvent {
+  public readonly eventType: string = 'create-game-command';
+
+  constructor(public readonly name: string,
+              public readonly smallBlind: number,
+              public readonly buyIn: number) {
+  }
+}
+
+export type GameTransition = {
+  transition: string,
+  playerId?: string,
+  amount?: number
+}
+
+export class TransitionCommand implements ClientEvent {
+  public readonly eventType: string = 'transition-command';
+
+  constructor(public readonly gameId: string,
+              public readonly transition: GameTransition) {
+  }
+}
+
 export class ConnectionController {
   private socket: ReconnectingWebSocket = null;
   private listenerMap: Map<string, Array<EventListener<any>>> = new Map();
 
   @action.bound
-  public init() {
+  public connect() {
+    this.disconnect();
+
     const username = rootStore.username;
     const wsUrl = `${Config.websocketUrl()}/player-events/${username}`;
 
@@ -33,7 +73,7 @@ export class ConnectionController {
       const event = JSON.parse(msg.data);
       const eventType = event.eventType;
       if (eventType == 'ping') {
-        this.send('pong', {});
+        this.send(new Pong());
         return;
       }
 
@@ -44,6 +84,13 @@ export class ConnectionController {
     });
   }
 
+  public disconnect() {
+    if (this.socket) {
+      this.socket.close();
+      this.socket = null;
+    }
+  }
+
   public listenEvents<T>(eventType: string, listener: EventListener<T>) {
     const listeners = this.listenerMap.get(eventType);
     if (!listeners)
@@ -52,11 +99,10 @@ export class ConnectionController {
       listeners.push(listener);
   }
 
-  public send(eventType: string, data: any) {
+  public send(event: ClientEvent) {
     if (this.socket) {
       this.socket.send(JSON.stringify({
-        ...data,
-        eventType
+        ...event
       }));
     }
   }

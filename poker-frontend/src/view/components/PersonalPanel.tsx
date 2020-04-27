@@ -3,8 +3,9 @@ import {rootStore} from 'app/store/RootStore';
 import bind from 'bind-decorator';
 import {observer} from 'mobx-react';
 import * as React from 'react';
-import * as style from './PersonalPanel.css';
-import {Button, Grid, Header, Icon, Label, Segment} from 'semantic-ui-react';
+import {Button, Header, Icon, Label, Segment} from 'semantic-ui-react';
+
+const style = require('./PersonalPanel.less');
 
 @observer
 export class PersonalPanel extends React.Component<any, any> {
@@ -17,34 +18,46 @@ export class PersonalPanel extends React.Component<any, any> {
     cls.profile.logout();
   }
 
+  @bind
+  private onBuyChipsClick() {
+    cls.profile.buyChips();
+  }
+
   render() {
     const username = rootStore.username;
+    const balance = rootStore.game.balance;
 
     return (
-      <Grid stretched>
-        <Grid.Row stretched>
-          <Grid.Column stretched>
-            <Segment raised textAlign={'center'}
-                     style={{display: 'flex', flexDirection: 'column', justifyContent: 'space-between'}}>
-              <Segment>
-                <Icon circular size="huge" name='user circle'/>
-                <br/>
-                <Header>{username}</Header>
-              </Segment>
+      <Segment textAlign='center' className={style.main}>
+        <Label attached='top' color='green'>User</Label>
+        <Segment className={style.userContainer}>
+          <Icon circular size="huge" name='user circle'/>
+          <br/>
+          <Header>{username}</Header>
+        </Segment>
+        <Segment className={style.balanceContainer} textAlign='left'>
+          <Label attached='top' color='blue' style={{textAlign: 'center'}}>Balance</Label>
+          <div style={{display: 'inline-block', fontSize: 20}}>
+            <Icon name='dollar sign'/>
+            {balance}
+          </div>
+        </Segment>
 
-              <Segment basic>
-                <Grid stretched>
-                  <Button
-                    content='logout' icon='log out' labelPosition='right'
-                    style={{width: '100vh', margin: 0}}
-                    onClick={this.onLogoutClick}
-                  />
-                </Grid>
-              </Segment>
-            </Segment>
-          </Grid.Column>
-        </Grid.Row>
-      </Grid>
+        <div className={style.buttonContainer} style={{flex: 0}}>
+          <Button content='Buy Chips'
+                  icon='payment' labelPosition='right' color='blue'
+                  style={{margin: 0}}
+                  onClick={this.onBuyChipsClick}
+          />
+        </div>
+        <div className={style.buttonContainer}>
+          <Button content='Log out'
+                  icon='log out' labelPosition='right'
+                  style={{margin: 0}}
+                  onClick={this.onLogoutClick}
+          />
+        </div>
+      </Segment>
     );
   }
 }

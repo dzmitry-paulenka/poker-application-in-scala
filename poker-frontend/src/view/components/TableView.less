@@ -1,0 +1,68 @@
+.main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.top {
+  img {
+    height: 300px;
+    margin-left: 57px;
+  }
+}
+
+.bottom {
+  position: absolute;
+  bottom: 20px;
+  height: 183px;
+
+  .cards {
+    display: flex;
+    flex-direction: row;
+    position: absolute;
+    left: 20px;
+    top: 20px;
+  }
+
+  .buttons {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+
+    position: absolute;
+    left: 240px;
+    top: 20px;
+    width: 120px;
+    height: 150px;
+    margin: 2px;
+  }
+
+  .info {
+    position: absolute;
+    left: 440px;
+    top: 6px;
+    width: 240px;
+  }
+}
+
+.card {
+  border: 2px solid black;
+  border-radius: 5px;
+  text-align: center;
+  margin: 2px;
+
+  &.back {
+    background-image: linear-gradient(to bottom, #1a2a6c, #b21f1f, #fdbb2d);
+  }
+
+  .rank {
+    height: 50%;
+    font-weight: bold;
+  }
+
+  .suit {
+    display: inline-block !important;
+    height: 50%;
+    object-fit: contain;
+  }
+}

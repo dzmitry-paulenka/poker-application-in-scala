@@ -10,7 +10,8 @@ class ActorService {
   implicit val executionContext: ExecutionContextExecutor = system.dispatcher
   implicit val materializer: Materializer                 = Materializer.matFromSystem
 
-  var playerActors: Map[String, ActorRef] = Map.empty[String, ActorRef]
+  private var playerActors: Map[String, ActorRef] = Map.empty[String, ActorRef]
+  private var gameActors: Map[String, ActorRef]   = Map.empty[String, ActorRef]
 
   var lobbyActor: ActorRef = _
 
@@ -28,6 +29,18 @@ class ActorService {
 
   def publish(event: Any): Unit = {
     system.eventStream.publish(event)
+  }
+
+  def createGameActor(gameId: String, name: String, smallBlind: Int, buyIn: Int): ActorRef = {
+    // todo: not thread-safe
+    println(s"Creating new game actor for $gameId: name: $name")
+    val ref = system.actorOf(Props(classOf[GameActor], gameId, name, smallBlind, buyIn))
+    gameActors += gameId -> ref
+    ref
+  }
+
+  def gameActor(gameId: String): Option[ActorRef] = {
+    gameActors.get(gameId)
   }
 
   def playerActor(playerId: String): ActorRef = {

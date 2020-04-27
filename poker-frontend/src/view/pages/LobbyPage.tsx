@@ -1,12 +1,13 @@
 import {cls} from 'app/controller/Controllers';
+import {rootStore} from 'app/store/RootStore';
+import {GameView} from 'app/view/components/GameView';
 import {PersonalPanel} from 'app/view/components/PersonalPanel';
 import {StatusPanel} from 'app/view/components/StatusPanel';
-import {TableView} from 'app/view/components/TableView';
 import {action} from 'mobx';
 import {observer} from 'mobx-react';
 import * as React from 'react';
 
-import {Grid} from 'semantic-ui-react'
+import {Dimmer, Grid, Loader, Segment} from 'semantic-ui-react'
 
 @observer
 export class LobbyPage extends React.Component<any, any> {
@@ -41,17 +42,21 @@ export class LobbyPage extends React.Component<any, any> {
 
   render() {
     const {username, password} = this.state;
+    const {playerId} = rootStore.game;
+
+    if (!playerId) {
+      return this.renderLoader();
+    }
 
     return (
       <Grid.Column stretched style={{width: 1200, height: 650}}>
-        {/*<Grid stretched style={{border: '1px solid blue'}}>*/}
         <Grid stretched>
           <Grid.Row stretched>
             <Grid.Column width={3}>
               <PersonalPanel/>
             </Grid.Column>
             <Grid.Column width={10}>
-              <TableView/>
+              <GameView/>
             </Grid.Column>
             <Grid.Column width={3}>
               <StatusPanel/>
@@ -60,5 +65,17 @@ export class LobbyPage extends React.Component<any, any> {
         </Grid>
       </Grid.Column>
     );
+  }
+
+  private renderLoader() {
+    return (
+      <Grid.Column stretched style={{width: 1200, height: 650}}>
+        <Segment>
+          <Dimmer active inverted>
+            <Loader/>
+          </Dimmer>
+        </Segment>
+      </Grid.Column>
+    )
   }
 }

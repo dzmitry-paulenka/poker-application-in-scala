@@ -24,7 +24,7 @@ class LobbyActor extends Actor {
     case CreateGame(playerId, name, smallBlind, buyIn, correlationData) =>
       val gameId = UUID.randomUUID().toString
 
-      val gameRef = actorSystem.actorOf(Props(classOf[GameActor], gameId, name, smallBlind, buyIn))
+      val gameRef = actorService.createGameActor(gameId, name, smallBlind, buyIn)
       gameRef ! GameActor.TransitionCommand(Join(playerId), correlationData)
 
       activeGames :+= ActiveGame(gameId, name, smallBlind, buyIn, 1)

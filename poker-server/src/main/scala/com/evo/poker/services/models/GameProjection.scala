@@ -23,9 +23,11 @@ case class PlayerProjection(
 @JsonCodec
 case class GameProjection(
   id: String,
+  name: String,
   phase: Phase,
   board: List[Card],
   pot: Int,
+  smallBlind: Int,
   roundBet: Int,
   players: Vector[PlayerProjection],
   currentPlayerIndex: Int,
@@ -51,9 +53,11 @@ object GameProjection {
 
     GameProjection(
       id = gameId,
+      game.name,
       game.phase,
       game.board,
       game.pot,
+      game.rules.smallBlind,
       game.roundBet,
       players,
       game.currentPlayerIndex,

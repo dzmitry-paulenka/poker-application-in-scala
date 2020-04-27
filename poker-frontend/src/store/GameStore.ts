@@ -1,4 +1,6 @@
-import {observable} from 'mobx';
+import {rootStore} from 'app/store/RootStore';
+import {Assert} from 'app/util/Assert';
+import {computed, observable} from 'mobx';
 import {
   createModelSchema,
   primitive,
@@ -18,6 +20,21 @@ export class Card {
 
   @serializable
   public rank: string;
+
+  @computed
+  get name(): string {
+    return `${this.rank}${this.suit}`
+  }
+
+  @computed
+  get displayRank(): string {
+    return this.rank == 'T' ? '10' : this.rank;
+  }
+
+  @computed
+  get cssColor(): string {
+    return this.suit == 'd' || this.suit == 'h' ? 'red' : 'black'
+  }
 }
 
 export class Player {
@@ -72,7 +89,11 @@ export class Game {
   @observable
   @serializable
   public id: string;
-  
+
+  @observable
+  @serializable
+  public name: string;
+
   @observable
   @serializable
   public phase: string;
@@ -84,6 +105,10 @@ export class Game {
   @observable
   @serializable
   public pot: number;
+
+  @observable
+  @serializable
+  public smallBlind: number;
 
   @observable
   @serializable
@@ -126,8 +151,101 @@ export class ActiveGame {
 
 export class GameStore {
   @observable
+  public playerId: string;
+
+  @observable
+  public balance: number = 0;
+
+  @observable
+  public raiseAmount: number = 0;
+
+  @observable
+  public raiseAmountNum: number = 0;
+
+  @observable
+  public raiseAmountValid: boolean = true;
+
+  @observable
   public activeGames: Array<ActiveGame> = [];
 
   @observable
-  public joinedGames: Array<any> = [];
+  public playerGames: Array<Game> = [];
+
+  @observable
+  public currentGame: Game = null;
+
+  @computed
+  get thisPlayer(): Player {
+    if (!this.currentGame)
+      return null;
+
+    const thisPlayer = this.currentGame.players.find(p => p.id == this.playerId);
+    Assert.yes(thisPlayer, 'thisPlayer should be defined at this point');
+
+    return thisPlayer;
+  }
+
+  @computed
+  get currentPlayer(): Player {
+    if (!this.currentGame)
+      return null;
+
+    return this.activePlayers[this.currentGame.currentPlayerIndex];
+  }
+
+  @computed
+  get dealerPlayer(): Player {
+    if (!this.currentGame)
+      return null;
+
+    return this.activePlayers[this.currentGame.dealerPlayerIndex];
+  }
+
+  @computed
+  get activePlayers(): Array<Player> {
+    if (!this.currentGame)
+      return [];
+
+    return this.currentGame.players.filter(p => !p.sittingOut);
+  }
+
+  @computed
+  get currentBalance(): number {
+    if (!this.thisPlayer)
+      return null;
+
+    return this.thisPlayer.balance;
+  }
+
+  @computed
+  get canFold(): boolean {
+    return this.currentGame &&
+      this.thisPlayer == this.currentPlayer &&
+      this.thisPlayer.roundBet == this.currentGame.roundBet;
+  }
+
+  @computed
+  get canCheck(): boolean {
+    return this.currentGame &&
+      this.thisPlayer == this.currentPlayer &&
+      this.thisPlayer.roundBet == this.currentGame.roundBet;
+  }
+
+  @computed
+  get canCall(): boolean {
+    return this.currentGame &&
+      this.thisPlayer == this.currentPlayer &&
+      this.thisPlayer.roundBet < this.currentGame.roundBet;
+  }
+
+  @computed
+  get canRaise(): boolean {
+    return this.currentGame &&
+      this.thisPlayer == this.currentPlayer &&
+      this.currentBalance > this.currentGame.roundBet;
+  }
+
+  public thisPlayerIsInGame(gameId: string): boolean {
+    return this.playerGames.some(g => g.id == gameId);
+  }
 }

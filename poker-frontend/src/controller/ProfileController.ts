@@ -1,3 +1,5 @@
+import {BuyChipsCommand} from 'app/controller/ConnectionController';
+import {cls} from 'app/controller/Controllers';
 import {rootStore} from 'app/store/RootStore';
 import {action} from 'mobx';
 
@@ -9,6 +11,7 @@ export class ProfileController {
     if (username) {
       rootStore.isLoggedIn = true;
       rootStore.username = username;
+      cls.connection.connect();
     }
   }
 
@@ -16,6 +19,7 @@ export class ProfileController {
   public login(username: string, password: string): void {
     rootStore.isLoggedIn = true;
     rootStore.username = username.trim();
+    cls.connection.connect();
     localStorage.setItem('username', username);
   }
 
@@ -24,5 +28,12 @@ export class ProfileController {
     rootStore.isLoggedIn = false;
     rootStore.username = null;
     localStorage.removeItem('username');
+  }
+
+  @action.bound
+  public buyChips(): void {
+    cls.connection.send(
+      new BuyChipsCommand(1000)
+    );
   }
 }
