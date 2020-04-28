@@ -158,6 +158,14 @@ export class GamesController {
   }
 
   @action.bound
+  public nextRound(gameId: string): void {
+    const {playerId} = rootStore.game;
+    this.transitionGame(gameId, {
+      transition: 'next-round'
+    })
+  }
+
+  @action.bound
   public join(gameId: string): void {
     const {playerId} = rootStore.game;
     this.transitionGame(gameId, {

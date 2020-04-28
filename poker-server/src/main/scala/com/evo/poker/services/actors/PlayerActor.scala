@@ -46,6 +46,9 @@ class PlayerActor(val playerId: String) extends Actor with Timers {
     case PingClients =>
       broadcastMessage(Ping)
 
+    case LeaveAllGamesIfNoConnections =>
+      leaveAllGamesIfNoConnections()
+
     case LobbyActor.ActiveGamesState(activeGames) =>
       broadcastMessage(ActiveGamesState(activeGames))
 
@@ -105,6 +108,8 @@ class PlayerActor(val playerId: String) extends Actor with Timers {
         // TODO: decrease balance on Join
         actorService.gameActor(gameId).foreach { gameActor =>
           gt match {
+            case NextRound =>
+              gameActor ! GameActor.TransitionCommand(gt, connectionId)
             case p: PlayerTransition if p.playerId == playerId =>
               gameActor ! GameActor.TransitionCommand(gt, connectionId)
             case _ =>
@@ -118,7 +123,7 @@ class PlayerActor(val playerId: String) extends Actor with Timers {
 
   private def broadcastPlayerState(): Unit = {
     broadcastMessage(PlayerState(playerId, balance, currentGames))
-    leaveAllGamesIfNoConnections()
+    timers.startSingleTimer("leave-games", LeaveAllGamesIfNoConnections, 5.seconds)
   }
 
   private def leaveAllGamesIfNoConnections(): Unit = {
@@ -142,6 +147,7 @@ object PlayerActor {
   case class Disconnected(connectionId: String)                        extends MessageIn
   case class ConnectionEvent(connectionId: String, event: ClientEvent) extends MessageIn
   case object PingClients                                              extends MessageIn
+  case object LeaveAllGamesIfNoConnections                             extends MessageIn
 
   sealed trait ClientEvent
   case object Pong                                                         extends ClientEvent

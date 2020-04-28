@@ -8,8 +8,6 @@ import com.softwaremill.quicklens._
 import com.evo.poker.logic.Card.CardList
 import com.evo.poker.util.Util.ift
 
-case class PlayerCombination(player: Player, combination: Combination)
-
 case class Game(
   name: String,
   rules: Rules,
@@ -338,28 +336,33 @@ case class Game(
   private def doShowdown(): OrError[Game] = {
     require(activePlayers.nonEmpty)
 
-    var winners = Vector.empty[Player]
+    var nWinners = Vector.empty[Player]
+    var nPlayers = players
     if (activePlayers.length == 1) {
-      winners = activePlayers
+      nWinners = activePlayers
     } else {
       require(board.length == 5)
-      winners = activePlayers
-        .map(bestCombinationForPlayerInGame)
-        .groupMap(_.combination)(_.player)
+
+      nPlayers = nPlayers
+        .map(fillBestComboForPlayerInGame)
+
+      nWinners = nPlayers
+        .filter(_.resultCombo.isDefined)
+        .groupBy(_.resultCombo.get)
         .maxBy(_._1)
         ._2
     }
 
-    require(winners.nonEmpty)
+    require(nWinners.nonEmpty)
 
-    val potDiv = pot / winners.length
-    val potRem = pot % winners.length
-    val nWinners = winners.mapWithIndex { (player, index) =>
+    val potDiv = pot / nWinners.length
+    val potRem = pot % nWinners.length
+    nWinners = nWinners.mapWithIndex { (player, index) =>
       player.copy(resultMoneyWon = potDiv + ift(index < potRem, 1, 0))
     }
 
-    val nPlayers = nWinners.foldLeft(players) { (nPlayers, winner) =>
-      val pIndex = players.indexWhere(_.id == winner.id)
+    nPlayers = nWinners.foldLeft(nPlayers) { (nPlayers, winner) =>
+      val pIndex = nPlayers.indexWhere(_.id == winner.id)
       nPlayers.modify(_.at(pIndex)).setTo(winner)
     }
 
@@ -370,18 +373,22 @@ case class Game(
     ).asRight
   }
 
-  private def bestCombinationForPlayerInGame(player: Player): PlayerCombination = {
-    val minHandUse = rules.minHandUse
-    val maxHandUse = rules.maxHandUse
-    val hand       = player.hand
+  private def fillBestComboForPlayerInGame(player: Player): Player = {
+    if (player.sittingOut) {
+      player.copy(resultCombo = None)
+    } else {
+      val minHandUse = rules.minHandUse
+      val maxHandUse = rules.maxHandUse
+      val hand       = player.hand
 
-    val combos = for {
-      handUse    <- minHandUse to maxHandUse
-      handCards  <- hand.combinations(handUse)
-      boardCards <- board.combinations(5 - handUse)
-    } yield Combination.of(handCards ++ boardCards)
+      val combos = for {
+        handUse    <- minHandUse to maxHandUse
+        handCards  <- hand.combinations(handUse)
+        boardCards <- board.combinations(5 - handUse)
+      } yield Combination.of(handCards ++ boardCards)
 
-    PlayerCombination(player, combos.max)
+      player.copy(resultCombo = Some(combos.max))
+    }
   }
 }
 

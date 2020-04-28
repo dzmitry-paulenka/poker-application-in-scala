@@ -5,7 +5,7 @@ import {Assert} from 'app/util/Assert';
 import bind from 'bind-decorator';
 import {observer} from 'mobx-react';
 import * as React from 'react';
-import {Button, Image, Input, Popup, Segment} from 'semantic-ui-react';
+import {Button, Icon, Image, Input, Popup, Segment} from 'semantic-ui-react';
 
 const style = require('./TableView.less');
 const cx = require('classnames/bind').bind(style);
@@ -37,13 +37,12 @@ export class TableView extends React.Component<any, any> {
   }
 
   render() {
-    const {currentGame, thisPlayer} = rootStore.game;
+    const {currentGame, thisPlayer, cardsDealt, isShowdown} = rootStore.game;
     const {canFold, canCheck, canCall} = rootStore.game;
 
     Assert.yes(currentGame, 'currentGame should be defined at this point');
     Assert.yes(thisPlayer, 'thisPlayer should be defined at this point');
 
-    const cardsDealt = thisPlayer.hand.length > 0;
     const card0 = cardsDealt && thisPlayer.hand[0];
     const card1 = cardsDealt && thisPlayer.hand[1];
     const players = currentGame.players;
@@ -77,6 +76,12 @@ export class TableView extends React.Component<any, any> {
             {!canCheck && <Button primary content='Call' disabled={!canCall} onClick={cls.games.doCall}/>}
             {this.renderRaiseButton()}
           </div>
+
+          {isShowdown && <Button className={style.nextRound}
+                                 content='Next round'
+                                 icon='arrow right' labelPosition='right'
+                                 onClick={() => cls.games.nextRound(currentGame.id)}
+          />}
 
           <Button className={style.leave}
                   content='Leave game'
@@ -123,9 +128,7 @@ export class TableView extends React.Component<any, any> {
   }
 
   private renderPlayer(player: Player, index: number) {
-    const {thisPlayer, currentPlayer, dealerPlayer} = rootStore.game;
-
-    const cardsDealt = thisPlayer.hand.length > 0;
+    const {thisPlayer, currentPlayer, dealerPlayer, currentGame, cardsDealt, isShowdown} = rootStore.game;
 
     const cardsVisible = player.hand.length > 0;
     const card0 = cardsVisible && player.hand[0];
@@ -136,6 +139,7 @@ export class TableView extends React.Component<any, any> {
     const isCurrent = player == currentPlayer;
     const isSelf = player == thisPlayer;
     const showHand = cardsDealt && !isSelf && !player.sittingOut;
+    const showCombo = !!player.resultComboName;
 
     const classNames = cx('player', `player${index}`, {'current': isCurrent}, {'self': isSelf});
     const classes = cx(
@@ -149,26 +153,31 @@ export class TableView extends React.Component<any, any> {
 
     return (
       <div key={player.id} className={classes}>
-        <div className={style.hand} style={{display: showHand ? undefined : 'none'}}>
+        {showHand && <div className={style.hand}>
           {this.renderCard(card0, cardStatus, 30)}
           {this.renderCard(card1, cardStatus, 30)}
-        </div>
+        </div>}
         <div className={style.badge}>
           <div className={style.name}>{player.id}</div>
           <div className={style.balance}>$&nbsp;{player.balance}</div>
         </div>
-        <div className={style.bet}>
-          <Image src={`assets/chip.png`}/>$&nbsp;{player.roundBet}
+        <div className={style.money}>
+          {player.resultMoneyWon > 0 && <Icon name='winner'/>}
+          <Image src={`assets/chip.png`}/>$&nbsp;{isShowdown ? player.resultMoneyWon : player.gameBet}
         </div>
+        {showCombo && player.resultComboName && <div className={style.combo}>
+          {player.resultComboName}
+        </div>}
         {isDealer && <Image className={style.dealer} src={`assets/chip-dealer.png`}/>}
       </div>
     )
   }
 
   private renderRaiseButton() {
-    const {thisPlayer, currentGame, raiseAmount, raiseAmountNum, raiseAmountValid, canRaise} = rootStore.game;
+    const {thisPlayer, currentGame, canRaise, raiseAmount, raiseAmountNum, raiseAmountValid} = rootStore.game;
 
     const okDisabled = !raiseAmountValid ||
+      raiseAmountNum == 0 ||
       thisPlayer.balance < currentGame.roundBet + raiseAmountNum - thisPlayer.roundBet;
 
     const allInAmount = thisPlayer.balance + thisPlayer.roundBet - currentGame.roundBet;

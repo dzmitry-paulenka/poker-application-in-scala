@@ -13,6 +13,7 @@ case class Player(
   gameBet: Int = 0,
   roundBet: Int = 0,
   resultMoneyWon: Int = 0,
+  resultCombo: Option[Combination] = None,
   actedInRound: Boolean = false,
   allIn: Boolean = false,
   sittingOut: Boolean = true
@@ -24,6 +25,7 @@ case class Player(
       gameBet = 0,
       roundBet = 0,
       resultMoneyWon = 0,
+      resultCombo = None,
       actedInRound = false,
       allIn = false,
       sittingOut = true
@@ -36,6 +38,7 @@ case class Player(
       gameBet = 0,
       roundBet = 0,
       resultMoneyWon = 0,
+      resultCombo = None,
       actedInRound = false,
       allIn = false,
       sittingOut = false
@@ -48,6 +51,7 @@ case class Player(
       gameBet = 0,
       roundBet = 0,
       resultMoneyWon = 0,
+      resultCombo = None,
       actedInRound = false,
       allIn = false,
       sittingOut = true

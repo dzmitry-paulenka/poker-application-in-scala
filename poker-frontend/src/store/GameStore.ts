@@ -60,6 +60,10 @@ export class Player {
 
   @observable
   @serializable
+  public resultComboName: string;
+
+  @observable
+  @serializable
   public resultMoneyWon: number;
 
   @observable
@@ -242,6 +246,16 @@ export class GameStore {
     return this.currentGame &&
       this.thisPlayer == this.currentPlayer &&
       this.currentBalance + this.thisPlayer.roundBet > this.currentGame.roundBet;
+  }
+
+  @computed
+  get cardsDealt(): boolean {
+    return this.thisPlayer && this.thisPlayer.hand.length > 0;
+  }
+
+  @computed
+  get isShowdown(): boolean {
+    return this.currentGame && this.currentGame.phase == 'showdown'
   }
 
   public thisPlayerIsInGame(gameId: string): boolean {

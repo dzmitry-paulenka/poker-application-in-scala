@@ -19,8 +19,8 @@ class GameActor(val gameId: String, val name: String, val smallBlind: Int, val b
     case AutoTransition =>
       if (game.canDeal)
         self ! TransitionCommand(Deal, "auto-transition")
-      else if (game.canNextRound)
-        self ! TransitionCommand(NextRound, "auto-transition")
+//      else if (game.canNextRound)
+//        self ! TransitionCommand(NextRound, "auto-transition")
 
     case TransitionCommand(transition, correlationData) =>
       game

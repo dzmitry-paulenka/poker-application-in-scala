@@ -37,6 +37,7 @@ class CodecsTest extends FlatSpec with GameTestHelper {
           "phase" : "pre-flop",
           "board" : [],
           "pot" : 3,
+          "smallBlind" : 1,
           "roundBet" : 2,
           "players" : [
             {
@@ -54,6 +55,7 @@ class CodecsTest extends FlatSpec with GameTestHelper {
               ],
               "gameBet" : 2,
               "roundBet" : 2,
+              "resultComboName" : null,
               "resultMoneyWon" : 0,
               "actedInRound" : false,
               "allIn" : false,
@@ -66,6 +68,7 @@ class CodecsTest extends FlatSpec with GameTestHelper {
               ],
               "gameBet" : 1,
               "roundBet" : 1,
+              "resultComboName" : null,
               "resultMoneyWon" : 0,
               "actedInRound" : false,
               "allIn" : false,

@@ -9,20 +9,20 @@ import scala.collection.MapView
 import com.evo.poker.logic.Rank._
 import com.evo.poker.logic.Tier._
 
-sealed abstract class Tier(val value: Int)
+sealed abstract class Tier(val value: Int, val name: String)
 
 object Tier {
-  case object StraightFlush       extends Tier(10)
-  case object LowAceStraightFlush extends Tier(9)
-  case object FourOfKind          extends Tier(8)
-  case object FullHouse           extends Tier(7)
-  case object Flush               extends Tier(6)
-  case object Straight            extends Tier(5)
-  case object LowAceStraight      extends Tier(4)
-  case object ThreeOfKind         extends Tier(3)
-  case object TwoPairs            extends Tier(2)
-  case object Pair                extends Tier(1)
-  case object HighCard            extends Tier(0)
+  case object StraightFlush       extends Tier(10, "Straight Flush")
+  case object LowAceStraightFlush extends Tier(9, "Straight Flush")
+  case object FourOfKind          extends Tier(8, "Four Of Kind")
+  case object FullHouse           extends Tier(7, "Full House")
+  case object Flush               extends Tier(6, "Flush")
+  case object Straight            extends Tier(5, "Straight")
+  case object LowAceStraight      extends Tier(4, "Straight")
+  case object ThreeOfKind         extends Tier(3, "Three Of Kind")
+  case object TwoPairs            extends Tier(2, "Two Pairs")
+  case object Pair                extends Tier(1, "Pair")
+  case object HighCard            extends Tier(0, "High Card")
 
   implicit val tierOrder: Order[Tier] =
     Order.by[Tier, Int](_.value)
