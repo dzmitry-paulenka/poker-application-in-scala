@@ -1,12 +1,6 @@
-import {CreateGameCommand, GameTransition, TransitionCommand} from 'app/controller/ConnectionController';
 import {cls} from 'app/controller/Controllers';
-import {ActiveGame, Game, Player} from 'app/store/GameStore';
 import {rootStore} from 'app/store/RootStore';
-import {Assert} from 'app/util/Assert';
-import bind from 'bind-decorator';
-import {action, observable} from 'mobx';
-
-import {deserialize, serializable, list, object} from 'serializr'
+import {action} from 'mobx';
 
 export class UiController {
 
@@ -61,7 +55,7 @@ export class UiController {
 
   @action.bound
   public joinGame(gameId: string) {
-    console.log("Joining the game: ", gameId);
     cls.games.join(gameId);
+    this.hideJoinDlg();
   }
 }

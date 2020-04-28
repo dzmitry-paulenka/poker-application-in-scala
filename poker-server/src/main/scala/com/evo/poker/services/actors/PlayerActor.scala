@@ -22,7 +22,8 @@ class PlayerActor(val playerId: String) extends Actor with Timers {
 
   private var connections: Map[String, ActorRef] = Map.empty[String, ActorRef]
 
-  actorService.subscribe(self, classOf[GameActor.GameStateChanged])
+  actorService.subscribe(self, classOf[GameActor.GameTransitioned])
+  actorService.subscribe(self, classOf[GameActor.GameTransitionError])
   actorService.subscribe(self, classOf[LobbyActor.ActiveGamesState])
 
   timers.startTimerWithFixedDelay("ping-timer", PingClients, 10.seconds)
@@ -37,6 +38,7 @@ class PlayerActor(val playerId: String) extends Actor with Timers {
     case Disconnected(connectionId) =>
       println(s"Player [$playerId]: Disconnected [$connectionId]")
       connections -= connectionId
+      broadcastPlayerState()
 
     case ConnectionEvent(connectionId, clientEvent) =>
       handleClientEvent(connectionId, clientEvent)
@@ -47,9 +49,23 @@ class PlayerActor(val playerId: String) extends Actor with Timers {
     case LobbyActor.ActiveGamesState(activeGames) =>
       broadcastMessage(ActiveGamesState(activeGames))
 
-    case GameActor.GameStateChanged(gameRef, gameId, game) =>
+    case GameActor.GameTransitioned(_, gameId, transition, prevGame, game) =>
       val gameIndex      = currentGames.indexWhere(_.id == gameId)
       val gameProjection = GameProjection.of(playerId, gameId, game)
+
+      transition match {
+        case Join(gPlayerId) if gPlayerId == playerId =>
+          game
+            .players
+            .find(_.id == playerId)
+            .foreach(p => balance -= p.balance)
+        case Leave(gPlayerId) if gPlayerId == playerId =>
+          prevGame
+            .players
+            .find(_.id == playerId)
+            .foreach(p => balance += p.balance + p.resultMoneyWon)
+        case _ =>
+      }
 
       if (game.players.exists(_.id == playerId)) {
         if (gameIndex >= 0) {
@@ -57,14 +73,13 @@ class PlayerActor(val playerId: String) extends Actor with Timers {
         } else {
           currentGames :+= gameProjection
         }
-        broadcastPlayerState()
       } else if (gameIndex >= 0) {
-        // TODO: remove games properly (update balance, etc...)
         currentGames = currentGames.filterNot(_.id == gameId)
-        broadcastPlayerState()
       }
+      broadcastPlayerState()
 
     case GameActor.GameTransitionError(_, _, error, correlationData) =>
+      println("Got game transition error: " + error)
       correlationData match {
         case connectionId: String =>
           connections.get(connectionId).foreach { _ ! ErrorMessage(error) }
@@ -80,8 +95,6 @@ class PlayerActor(val playerId: String) extends Actor with Timers {
       case CreateGameCommand(name, smallBlind, buyIn) =>
         if (balance >= buyIn) {
           lobbyActor ! LobbyActor.CreateGame(playerId, name, smallBlind, buyIn, connectionId)
-          balance -= buyIn
-          broadcastPlayerState()
         } else {
           connections.get(connectionId).foreach {
             _ ! ErrorMessage("Not enough money to create a game with that buy-in value")
@@ -103,8 +116,20 @@ class PlayerActor(val playerId: String) extends Actor with Timers {
     }
   }
 
-  private def broadcastPlayerState(): Unit =
+  private def broadcastPlayerState(): Unit = {
     broadcastMessage(PlayerState(playerId, balance, currentGames))
+    leaveAllGamesIfNoConnections()
+  }
+
+  private def leaveAllGamesIfNoConnections(): Unit = {
+    if (connections.isEmpty) {
+      currentGames.foreach { game =>
+        actorService.gameActor(game.id).foreach { gameActor =>
+          gameActor ! GameActor.TransitionCommand(Leave(playerId), "connections-closed")
+        }
+      }
+    }
+  }
 
   private def broadcastMessage(message: ServerEvent): Unit =
     connections.values.foreach(_ ! message)

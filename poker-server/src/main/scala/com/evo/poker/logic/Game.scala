@@ -73,6 +73,12 @@ case class Game(
     ift(leavingIndex >= 0 && index > leavingIndex, index - 1, index)
   }
 
+  def canDeal: Boolean =
+    this.deal().isRight
+
+  def canNextRound: Boolean =
+    this.nextRound().isRight
+
   def transition(transition: GameTransition): OrError[Game] = {
     transition match {
       case Deal                    => deal()
@@ -88,7 +94,7 @@ case class Game(
   }
 
   def deal(): OrError[Game] = {
-    if (!Phase.dealAllowed(phase))
+    if (phase != PreDeal)
       return s"Can't deal in phase $phase".asLeft
 
     var nDeck             = deck
@@ -102,7 +108,7 @@ case class Game(
         nDeck = deck
 
         nActivePlayersCnt += 1
-        player.enterGame(hand = hand).acted()
+        player.enterRound(hand = hand).acted()
       }
     }
 
@@ -177,11 +183,12 @@ case class Game(
       nPlayers            = players.filterNot(_.id == playerId)
       nCurrentPlayerIndex = adjustCurrentIndexOnLeave(currentPlayerIndex, playerId)
 
-      ng <- copy(
+      ng = copy(
         players = nPlayers,
         currentPlayerIndex = nCurrentPlayerIndex
-      ).asRight
+      )
 
+      ng <- ift(ng.activePlayers.length == 1, ng.doShowdown(), ng.asRight)
     } yield ng
   }
 
@@ -274,13 +281,15 @@ case class Game(
       return s"Can't finish in phase $phase".asLeft
 
     val nPlayers = players.map(
-      _.endGame()
+      _.endRound()
     )
 
-    Game(
-      name = name,
-      rules = rules,
+    copy(
       deck = deck.reset(),
+      phase = PreDeal,
+      board = Nil,
+      pot = 0,
+      roundBet = 0,
       players = nPlayers
     ).asRight
   }
@@ -310,7 +319,7 @@ case class Game(
 
     for {
       nPlayers <- players.traverse { player =>
-        ift(allActed, player.enterNewRound(), player.asRight)
+        ift(allActed, player.enterNewPhase(), player.asRight)
       }
 
       ng <- copy(
@@ -329,21 +338,17 @@ case class Game(
   private def doShowdown(): OrError[Game] = {
     require(activePlayers.nonEmpty)
 
-    if (activePlayers.length == 1 && board.length < 5) {
-      val (cards, nDeck) = deck.deal(5 - board.length)
-      return copy(
-        deck = nDeck,
-        board = board ++ cards
-      ).doShowdown()
+    var winners = Vector.empty[Player]
+    if (activePlayers.length == 1) {
+      winners = activePlayers
+    } else {
+      require(board.length == 5)
+      winners = activePlayers
+        .map(bestCombinationForPlayerInGame)
+        .groupMap(_.combination)(_.player)
+        .maxBy(_._1)
+        ._2
     }
-
-    require(board.length == 5)
-
-    val winners = activePlayers
-      .map(bestCombinationForPlayerInGame)
-      .groupMap(_.combination)(_.player)
-      .maxBy(_._1)
-      ._2
 
     require(winners.nonEmpty)
 
@@ -360,6 +365,7 @@ case class Game(
 
     copy(
       phase = Showdown,
+      currentPlayerIndex = -1,
       players = nPlayers
     ).asRight
   }

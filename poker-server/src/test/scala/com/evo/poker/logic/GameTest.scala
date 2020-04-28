@@ -9,8 +9,6 @@ import com.evo.poker.GameTestHelper
 
 //noinspection ScalaDeprecation
 class GameTest extends FlatSpec with GameTestHelper {
-  val sb = rules.smallBlind
-  val bb = rules.bigBlind
 
   implicit class UnsafeGameOpts(g: Game) {
     def player(id: String): Player =
@@ -27,11 +25,11 @@ class GameTest extends FlatSpec with GameTestHelper {
           g.players.size shouldBe 3
 
           g.player("a") shouldBe g.currentPlayer
-          g.player("b").balance shouldBe (100 - sb)
-          g.player("c").balance shouldBe (100 - bb)
+          g.player("b").balance shouldBe 99
+          g.player("c").balance shouldBe 98
 
-          g.pot shouldBe (sb + bb)
-          g.roundBet shouldBe bb
+          g.pot shouldBe 3
+          g.roundBet shouldBe 2
         }
       } yield g
     }
@@ -125,12 +123,18 @@ class GameTest extends FlatSpec with GameTestHelper {
           g.board shouldBe empty
           g.players.length shouldBe 3
           g.currentPlayerIndex shouldBe -1
+          g.dealerPlayerIndex shouldBe 0
 
           g.player("b").balance shouldBe 116
           g.player("c").balance shouldBe 90
           g.player("d").balance shouldBe 100
-
         }
+
+        g <- g.deal()
+        g <- validate(g) { g =>
+          g.dealerPlayerIndex shouldBe 1
+        }
+
       } yield g
     }
   }
@@ -145,5 +149,85 @@ class GameTest extends FlatSpec with GameTestHelper {
     }
   }
 
-  it should "handle join/leave properly" in {}
+  it should "let player leave any time" in {
+    def assertMoveToInititalStageOnLeave(g: Game, balance: Int, onPreDeal: Boolean = false): OrError[Game] = {
+      var ng = g.leave("b").right.value
+
+      if (!onPreDeal) {
+        ng.phase shouldBe Showdown
+        ng = ng.nextRound().right.value
+      }
+
+      ng.phase shouldBe PreDeal
+      ng.board shouldBe Nil
+      ng.pot shouldBe 0
+      ng.roundBet shouldBe 0
+      ng.currentPlayerIndex shouldBe -1
+      ng.players.size shouldBe 1
+
+      val aPlayer = ng.player("a")
+      aPlayer.balance shouldBe balance
+      aPlayer.hand shouldBe Nil
+      aPlayer.gameBet shouldBe 0
+      aPlayer.roundBet shouldBe 0
+      aPlayer.resultMoneyWon shouldBe 0
+      aPlayer.actedInRound shouldBe false
+      aPlayer.sittingOut shouldBe true
+
+      g.asRight
+    }
+
+    assertValidGame {
+      for {
+        g <- sampleGame(2, "Ac7c Qs9h 9cKc3h5s9d")
+        g <- assertMoveToInititalStageOnLeave(g, balance = 100, onPreDeal = true)
+        g <- g.deal()
+        g <- assertMoveToInititalStageOnLeave(g, balance = 101)
+        g <- g.call("b")
+        g <- assertMoveToInititalStageOnLeave(g, balance = 102)
+        g <- g.check("a")
+        g <- assertMoveToInititalStageOnLeave(g, balance = 102)
+
+        g <- g.raise("b", 10)
+        g <- assertMoveToInititalStageOnLeave(g, balance = 112)
+        g <- g.raise("a", 10)
+        g <- assertMoveToInititalStageOnLeave(g, balance = 112)
+        g <- g.call("b")
+        g <- assertMoveToInititalStageOnLeave(g, balance = 122)
+
+        g <- g.check("b")
+        g <- assertMoveToInititalStageOnLeave(g, balance = 122)
+        g <- g.check("a")
+        g <- assertMoveToInititalStageOnLeave(g, balance = 122)
+
+        g <- g.check("b")
+        g <- assertMoveToInititalStageOnLeave(g, balance = 122)
+        g <- g.raise("a", 10)
+        g <- assertMoveToInititalStageOnLeave(g, balance = 122)
+        g <- g.fold("b")
+        g <- assertMoveToInititalStageOnLeave(g, balance = 122)
+
+        g <- g.nextRound()
+        g <- assertMoveToInititalStageOnLeave(g, balance = 122, onPreDeal = true)
+        g <- g.deal()
+        g <- assertMoveToInititalStageOnLeave(g, balance = 124)
+      } yield g
+    }
+  }
+
+  it should "force-start next round, when there is single active player" in {
+    assertValidGame {
+      for {
+        g <- sampleGame(3)
+        g <- g.deal()
+        g <- g.fold("a")
+        g <- g.call("b")
+
+        g <- g.leave("b")
+        g <- validate(g) { g =>
+          g.phase shouldBe Showdown
+        }
+      } yield g
+    }
+  }
 }

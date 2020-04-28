@@ -2,12 +2,166 @@
   flex: 1;
   display: flex;
   flex-direction: column;
+  background: #adadad !important;
 }
 
 .top {
-  img {
+  position: relative;
+
+  .table {
     height: 300px;
     margin-left: 57px;
+  }
+
+  .board {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    top: 113px;
+    left: 246px;
+    width: 200px;
+    height: 40px;
+  }
+
+  .pot {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    top: 159px;
+    left: 246px;
+    color: white;
+    font-weight: bold;
+    width: 200px;
+    height: 24px;
+    line-height: 24px;
+    text-align: center;
+
+    img {
+      display: inline-block;
+    }
+  }
+
+  .player {
+    position: absolute;
+    white-space: nowrap;
+
+    .hand {
+      display: flex;
+      flex-direction: row;
+      position: absolute;
+      top: -40px;
+      left: 18px;
+    }
+
+    .bet {
+      position: absolute;
+      left: 0;
+      top: 64px;
+
+      color: white;
+      font-weight: bold;
+      width: 100px;
+      height: 24px;
+      border-radius: 5px;
+      line-height: 24px;
+      background: #00000074;
+      text-align: center;
+
+      img {
+        display: inline-block;
+      }
+    }
+
+    .dealer {
+      position: absolute;
+      top: -6px;
+      left: -6px;
+    }
+
+    .badge {
+      background: #00000074;
+      color: white;
+      text-align: center;
+      padding: 10px;
+      width: 100px;
+      height: 60px;
+      border-radius: 10px;
+      overflow: hidden;
+
+      .name {
+        font-size: 16px;
+      }
+
+      .balance {
+        font-size: 20px;
+        font-weight: bold;
+        margin-top: 5px;
+      }
+    }
+
+    &.sitting {
+      opacity: 0.5;
+    }
+
+    &.current {
+      .badge {
+        border: 2px dashed white
+      }
+    }
+
+    &.self {
+      .bet {
+        background: #00800074 !important;
+      }
+
+      .badge {
+        background: #00800074 !important;
+      }
+
+      .name {
+        font-size: 25px;
+        font-weight: bold;
+      }
+    }
+
+    &.player0 {
+      top: 5px;
+      left: 455px;
+    }
+
+    &.player1 {
+      top: 112px;
+      left: 554px;
+    }
+
+    &.player2 {
+      top: 242px;
+      left: 455px;
+    }
+
+    &.player3 {
+      top: 242px;
+      left: 309px;
+    }
+
+    &.player4 {
+      top: 242px;
+      left: 154px;
+    }
+
+    &.player5 {
+      top: 112px;
+      left: 40px;
+    }
+
+    &.player6 {
+      top: 5px;
+      left: 154px;
+    }
   }
 }
 
@@ -15,6 +169,8 @@
   position: absolute;
   bottom: 20px;
   height: 183px;
+  top: 368px;
+  left: -5px;
 
   .cards {
     display: flex;
@@ -37,6 +193,13 @@
     margin: 2px;
   }
 
+  .leave {
+    position: absolute;
+    width: 160px;
+    left: 535px;
+    top: 136px;
+  }
+
   .info {
     position: absolute;
     left: 440px;
@@ -50,6 +213,11 @@
   border-radius: 5px;
   text-align: center;
   margin: 2px;
+  background: white;
+
+  &.missing {
+    border: 2px dashed black;
+  }
 
   &.back {
     background-image: linear-gradient(to bottom, #1a2a6c, #b21f1f, #fdbb2d);

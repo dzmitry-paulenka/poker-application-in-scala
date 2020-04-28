@@ -4,38 +4,35 @@ import akka.actor.{Actor, ActorRef, Timers}
 
 import scala.concurrent.duration._
 
-import com.evo.poker.logic.{Deck, Game, GameTransition, Rules}
+import com.evo.poker.logic._
 import com.evo.poker.services.Services
-import com.evo.poker.services.actors.GameActor.{
-  TransitionForcefully,
-  GameStateChanged,
-  GameTransitionError,
-  TransitionCommand
-}
+import com.evo.poker.services.actors.GameActor.{AutoTransition, GameTransitionError, GameTransitioned, TransitionCommand}
 
 class GameActor(val gameId: String, val name: String, val smallBlind: Int, val buyIn: Int) extends Actor with Timers {
   private val actorService = Services.actor
 
-  var game: Game = Game.create(Rules.texas(smallBlind, buyIn), Deck.random(), name)
+  private var game: Game = Game.create(Rules.texas(smallBlind, buyIn), Deck.random(), name)
 
-  timers.startTimerWithFixedDelay("ping-timer", TransitionForcefully, 10.seconds)
+  this.rescheduleAutoTransition()
 
   override def receive: Receive = {
-    case TransitionForcefully =>
-      // TODO: consider timestamp of last action
-      // TODO: reschedule to trigger next time on (lastTimeStamp + 10.seconds)
-      ???
+    case AutoTransition =>
+      if (game.canDeal)
+        self ! TransitionCommand(Deal, "auto-transition")
+      else if (game.canNextRound)
+        self ! TransitionCommand(NextRound, "auto-transition")
 
-    case TransitionCommand(gt, correlationData) =>
+    case TransitionCommand(transition, correlationData) =>
       game
-        .transition(gt)
+        .transition(transition)
         .swap
         .fold(
-          ng => {
-            game = ng
+          newGame => {
             actorService.publish(
-              GameStateChanged(self, gameId, game)
+              GameTransitioned(self, gameId, transition, game, newGame)
             )
+            game = newGame
+            rescheduleAutoTransition()
           },
           error => {
             actorService.publish(
@@ -44,15 +41,26 @@ class GameActor(val gameId: String, val name: String, val smallBlind: Int, val b
           }
         )
   }
+
+  private def rescheduleAutoTransition(): Unit = {
+    timers.startTimerWithFixedDelay("auto-transition-timer", AutoTransition, 3.seconds)
+  }
 }
 
 object GameActor {
   sealed trait MessageIn
-  case object TransitionForcefully
+  case object AutoTransition
   case class TransitionCommand(gt: GameTransition, correlationData: Any) extends MessageIn
 
   sealed trait Event
-  case class GameStateChanged(gameRef: ActorRef, gameId: String, game: Game) extends Event
+  case class GameTransitioned(
+    gameRef: ActorRef,
+    gameId: String,
+    transition: GameTransition,
+    prevGame: Game,
+    game: Game
+  ) extends Event
+
   case class GameTransitionError(
     gameRef: ActorRef,
     gameId: String,

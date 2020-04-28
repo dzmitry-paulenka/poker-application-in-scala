@@ -11,9 +11,6 @@ case object Showdown extends Phase
 case object Ended    extends Phase
 
 object Phase {
-  def dealAllowed(phase: Phase): Boolean =
-    phase == PreDeal
-
   def betsAllowed(phase: Phase): Boolean =
     phase == PreFlop || phase == Flop || phase == Turn || phase == River
 
@@ -25,6 +22,7 @@ object Phase {
       case Turn     => 1
       case River    => 1
       case Showdown => 0
+      case Ended    => 0
     }
 
   def nextPlayable(current: Phase): Phase =
@@ -35,5 +33,6 @@ object Phase {
       case Turn     => River
       case River    => Showdown
       case Showdown => PreDeal
+      case Ended    => Ended
     }
 }

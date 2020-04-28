@@ -8,6 +8,8 @@ import {Button, Form, Header, Icon, Image, Menu, Modal, Segment, Table} from 'se
 
 const style = require('./GameView.less');
 
+const PLAYER_COUNT_LIMIT = 7;
+
 @observer
 export class GameView extends React.Component<any, any> {
   constructor(props: any, context: any) {
@@ -121,26 +123,33 @@ export class GameView extends React.Component<any, any> {
                 <Table.HeaderCell width={5}>Game name</Table.HeaderCell>
                 <Table.HeaderCell width={3}>Small Blind</Table.HeaderCell>
                 <Table.HeaderCell width={3}>Buy In</Table.HeaderCell>
+                <Table.HeaderCell width={3}>Players Count</Table.HeaderCell>
                 <Table.HeaderCell width={3}>Join</Table.HeaderCell>
               </Table.Row>
             </Table.Header>
 
             <Table.Body>
-              {activeGames.map(ag =>
-                <Table.Row key={ag.id}>
-                  <Table.Cell>{ag.name}</Table.Cell>
-                  <Table.Cell>{ag.smallBlind}</Table.Cell>
-                  <Table.Cell>{ag.buyIn}</Table.Cell>
-                  <Table.Cell>
-                    <Button
-                      style={{width: '100%'}}
-                      primary
-                      content='Join'
-                      disabled={ag.buyIn > balance || rootStore.game.thisPlayerIsInGame(ag.id)}
-                      onClick={() => cls.ui.joinGame(ag.id)}
-                    />
-                  </Table.Cell>
-                </Table.Row>
+              {activeGames.map(ag => {
+                  const canJoin = ag.buyIn <= balance &&
+                    !rootStore.game.thisPlayerIsInGame(ag.id) &&
+                    ag.playerCount < PLAYER_COUNT_LIMIT;
+
+                  return <Table.Row key={ag.id}>
+                    <Table.Cell>{ag.name}</Table.Cell>
+                    <Table.Cell>{ag.smallBlind}</Table.Cell>
+                    <Table.Cell>{ag.buyIn}</Table.Cell>
+                    <Table.Cell>{ag.playerCount}</Table.Cell>
+                    <Table.Cell>
+                      <Button
+                        style={{width: '100%'}}
+                        primary
+                        content='Join'
+                        disabled={!canJoin}
+                        onClick={() => cls.ui.joinGame(ag.id)}
+                      />
+                    </Table.Cell>
+                  </Table.Row>;
+                }
               )}
             </Table.Body>
           </Table>

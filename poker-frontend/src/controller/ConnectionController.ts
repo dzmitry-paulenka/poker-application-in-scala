@@ -1,6 +1,7 @@
 import {Config} from 'app/config/Config';
 import {rootStore} from 'app/store/RootStore';
 import {action} from 'mobx';
+import * as Noty from 'noty';
 import ReconnectingWebSocket from 'reconnecting-websocket';
 
 export type EventListener<T> = (event: T) => void;
@@ -74,6 +75,19 @@ export class ConnectionController {
       const eventType = event.eventType;
       if (eventType == 'ping') {
         this.send(new Pong());
+        return;
+      }
+
+      if (eventType == 'error-message') {
+        new Noty({
+          type: 'error',
+          text: event.error,
+          theme: 'semanticui',
+          layout: 'topLeft',
+          timeout: 5000,
+          progressBar: true
+        }).show();
+
         return;
       }
 

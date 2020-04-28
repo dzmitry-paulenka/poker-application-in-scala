@@ -15,7 +15,7 @@ class LobbyActor extends Actor {
 
   private var activeGames: Vector[ActiveGame] = Vector()
 
-  actorService.subscribe(self, classOf[GameActor.GameStateChanged])
+  actorService.subscribe(self, classOf[GameActor.GameTransitioned])
 
   override def receive: Receive = {
     case PublishActiveGames() =>
@@ -30,16 +30,17 @@ class LobbyActor extends Actor {
       activeGames :+= ActiveGame(gameId, name, smallBlind, buyIn, 1)
       publishActiveGames()
 
-    case GameActor.GameStateChanged(gameRef, gameId, game) =>
+    case GameActor.GameTransitioned(gameRef, gameId, _, _, game) =>
       val index = activeGames.indexWhere(_.id == gameId)
       if (index >= 0) {
-        if (game.phase == Ended) {
+        if (game.players.isEmpty || game.phase == Ended) {
           activeGames = activeGames.filterNot(_.id == gameId)
           gameRef ! PoisonPill
         } else {
           val activeGame = activeGames(index).copy(playerCount = game.players.size)
           activeGames = activeGames.updated(index, activeGame)
         }
+
         publishActiveGames()
       }
   }

@@ -30,7 +30,7 @@ case class Player(
     )
   }
 
-  def enterGame(hand: Hand): Player =
+  def enterRound(hand: Hand): Player =
     copy(
       hand = hand,
       gameBet = 0,
@@ -41,11 +41,20 @@ case class Player(
       sittingOut = false
     )
 
-  def endGame(): Player = {
-    Player(id, balance = balance + resultMoneyWon)
+  def endRound(): Player = {
+    copy(
+      balance = balance + resultMoneyWon,
+      hand = Nil,
+      gameBet = 0,
+      roundBet = 0,
+      resultMoneyWon = 0,
+      actedInRound = false,
+      allIn = false,
+      sittingOut = true
+    )
   }
 
-  def enterNewRound(): OrError[Player] = {
+  def enterNewPhase(): OrError[Player] = {
     copy(
       roundBet = 0,
       actedInRound = false

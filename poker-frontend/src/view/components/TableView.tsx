@@ -1,122 +1,187 @@
 import {cls} from 'app/controller/Controllers';
-import {Card} from 'app/store/GameStore';
+import {Card, Player} from 'app/store/GameStore';
 import {rootStore} from 'app/store/RootStore';
 import {Assert} from 'app/util/Assert';
 import bind from 'bind-decorator';
 import {observer} from 'mobx-react';
 import * as React from 'react';
-import {Button, Image, Input, Popup, Segment, Table} from 'semantic-ui-react';
+import {Button, Image, Input, Popup, Segment} from 'semantic-ui-react';
 
 const style = require('./TableView.less');
-
-export const CardView: React.FC<any> = (props) => {
-  const card: Card = props.card;
-  const width: number = props.width;
-  const height: number = width * 3 / 2;
-  const isFront = !card;
-  if (!card) {
-    return (
-      <div className={`${style.card} ${style.back}`} style={{width: width, height: height}}/>
-    )
-  }
-
-  const rank = card.displayRank;
-  const suit = card.suit;
-  const color = card.cssColor;
-
-  return (
-    <div className={style.card} style={{width: width, height: height, color: color}}>
-      <div className={style.rank}
-           style={{fontSize: height / 2, lineHeight: `${height / 2}px`}}
-      >
-        {rank}
-      </div>
-      <Image className={style.suit} src={`assets/card-suit-${suit}.png`}/>
-    </div>
-  );
-};
+const cx = require('classnames/bind').bind(style);
 
 @observer
 export class TableView extends React.Component<any, any> {
   constructor(props: any, context: any) {
     super(props, context);
+
+    this.state = {
+      raisePopupOpened: false
+    };
   }
 
   @bind
-  private editRaiseAmount(editValue: string) {
-    cls.games.changeRaiseAmount(editValue);
+  private openRaisePopup() {
+    this.setState({raisePopupOpened: true});
   }
 
   @bind
-  private doFold() {
-    cls.games.doFold();
+  private closeRaisePopup() {
+    this.setState({raisePopupOpened: false});
   }
 
   @bind
-  private doCheck() {
-    cls.games.doCheck();
-  }
-
-  @bind
-  private doCall() {
-    cls.games.doCall();
-  }
-
-  @bind
-  private doRaise() {
+  private onRaiseOkClicked() {
     cls.games.doRaise();
+    this.closeRaisePopup();
   }
 
   render() {
-    const {playerId, currentGame, thisPlayer, balance} = rootStore.game;
+    const {currentGame, thisPlayer} = rootStore.game;
     const {canFold, canCheck, canCall} = rootStore.game;
 
     Assert.yes(currentGame, 'currentGame should be defined at this point');
     Assert.yes(thisPlayer, 'thisPlayer should be defined at this point');
 
-    const card0 = thisPlayer.hand[0];
-    // const card1 = thisPlayer.hand[1];
-    const card1 = null;
-
-    const isCall = true;
-    const callDisabled = true;
-    const foldDisabled = true;
-    const checkCallText = isCall ? 'Call' : 'Check';
+    const cardsDealt = thisPlayer.hand.length > 0;
+    const card0 = cardsDealt && thisPlayer.hand[0];
+    const card1 = cardsDealt && thisPlayer.hand[1];
+    const players = currentGame.players;
 
     return (
       <Segment className={style.main}>
         <div className={style.top}>
-          <Image src='assets/table-base.svg'/>
+          <Image className={style.table} src='assets/table-base.svg'/>
+          {players.map((player, index) =>
+            this.renderPlayer(player, index)
+          )}
+          <div className={style.board}>
+            {currentGame.board.map((card, index) =>
+              this.renderCard(card, 'front', 30, index)
+            )}
+          </div>
+          <div className={style.pot}>
+            <Image src={`assets/chip.png`}/>$&nbsp;{currentGame.pot}
+          </div>
         </div>
 
         <div className={style.bottom}>
           <div className={style.cards}>
-            <CardView card={card0} width={100}/>
-            <CardView card={card1} width={100}/>
+            {this.renderCard(card0, cardsDealt ? 'front' : 'missing', 100)}
+            {this.renderCard(card1, cardsDealt ? 'front' : 'missing', 100)}
           </div>
 
           <div className={style.buttons}>
-            <Button primary content='Fold' disabled={!canFold} onClick={this.doFold}/>
-            {canCheck && <Button primary content='Check' disabled={!canCheck} onClick={this.doCheck}/>}
-            {!canCheck && <Button primary content='Call' disabled={!canCall} onClick={this.doCall}/>}
+            <Button primary content='Fold' disabled={!canFold} onClick={cls.games.doFold}/>
+            {canCheck && <Button primary content='Check' disabled={!canCheck} onClick={cls.games.doCheck}/>}
+            {!canCheck && <Button primary content='Call' disabled={!canCall} onClick={cls.games.doCall}/>}
             {this.renderRaiseButton()}
           </div>
+
+          <Button className={style.leave}
+                  content='Leave game'
+                  icon='log out' labelPosition='right'
+                  onClick={() => cls.games.leave(currentGame.id)}
+          />
+
         </div>
       </Segment>
     );
   }
 
-  private renderRaiseButton() {
-    const {playerId, currentGame, thisPlayer, currentBalance} = rootStore.game;
-    const {raiseAmount, raiseAmountNum, raiseAmountValid, canRaise} = rootStore.game;
+  private renderCard(card: Card, state: string = 'front', width: number, key: number = undefined) {
+    const height: number = width * 3 / 2;
 
-    const okDisabled = !raiseAmountValid || raiseAmountNum > currentBalance;
-    const allInDisabled = !raiseAmountValid;
+    const rank = card && card.displayRank;
+    const suit = card && card.suit;
+    const color = card && card.cssColor;
+
+    const classes = cx({
+      card: true,
+      missing: state == 'missing',
+      back: state == 'back',
+      front: state == 'front'
+    });
+
+    if (state != 'front') {
+      return (
+        <div key={key} className={classes} style={{width: width, height: height, color: color}}/>
+      );
+    }
+
+    return (
+      <div key={key} className={classes} style={{width: width, height: height, color: color}}>
+        <div className={style.rank} style={{fontSize: height / 2, lineHeight: `${height / 2}px`}}>
+          {rank}
+        </div>
+        <Image
+          className={style.suit}
+          style={{height: '45%'}}
+          src={`assets/card-suit-${suit}.png`}/>
+      </div>
+    );
+  }
+
+  private renderPlayer(player: Player, index: number) {
+    const {thisPlayer, currentPlayer, dealerPlayer} = rootStore.game;
+
+    const cardsDealt = thisPlayer.hand.length > 0;
+
+    const cardsVisible = player.hand.length > 0;
+    const card0 = cardsVisible && player.hand[0];
+    const card1 = cardsVisible && player.hand[1];
+    const cardStatus = cardsVisible ? 'front' : 'back';
+
+    const isDealer = player == dealerPlayer;
+    const isCurrent = player == currentPlayer;
+    const isSelf = player == thisPlayer;
+    const showHand = cardsDealt && !isSelf && !player.sittingOut;
+
+    const classNames = cx('player', `player${index}`, {'current': isCurrent}, {'self': isSelf});
+    const classes = cx(
+      'player',
+      `player${index}`,
+      {
+        self: isSelf,
+        current: isCurrent,
+        sitting: player.sittingOut
+      });
+
+    return (
+      <div key={player.id} className={classes}>
+        <div className={style.hand} style={{display: showHand ? undefined : 'none'}}>
+          {this.renderCard(card0, cardStatus, 30)}
+          {this.renderCard(card1, cardStatus, 30)}
+        </div>
+        <div className={style.badge}>
+          <div className={style.name}>{player.id}</div>
+          <div className={style.balance}>$&nbsp;{player.balance}</div>
+        </div>
+        <div className={style.bet}>
+          <Image src={`assets/chip.png`}/>$&nbsp;{player.roundBet}
+        </div>
+        {isDealer && <Image className={style.dealer} src={`assets/chip-dealer.png`}/>}
+      </div>
+    )
+  }
+
+  private renderRaiseButton() {
+    const {thisPlayer, currentGame, raiseAmount, raiseAmountNum, raiseAmountValid, canRaise} = rootStore.game;
+
+    const okDisabled = !raiseAmountValid ||
+      thisPlayer.balance < currentGame.roundBet + raiseAmountNum - thisPlayer.roundBet;
+
+    const allInAmount = thisPlayer.balance + thisPlayer.roundBet - currentGame.roundBet;
+    const allInDisabled = !raiseAmountValid || allInAmount < 0;
+    const raiseText = currentGame.roundBet == 0 ? 'Bet' : 'Raise';
 
     return <Popup
       trigger={
-        <Button primary disabled={!canRaise}>Raise</Button>
+        <Button primary disabled={!canRaise}>{raiseText}</Button>
       }
+      open={this.state.raisePopupOpened}
+      onOpen={this.openRaisePopup}
+      onClose={this.closeRaisePopup}
       on='click'
       position='right center'
     >
@@ -126,15 +191,15 @@ export class TableView extends React.Component<any, any> {
         placeholder='Raise amount'
         value={raiseAmount}
         error={!raiseAmountValid}
-        onChange={e => this.editRaiseAmount(e.target.value)}
+        onChange={e => cls.games.changeRaiseAmount(e.target.value)}
       />
 
       <div style={{marginTop: 10}}>
         <Button color='green' content='Ok' disabled={okDisabled}
-                onClick={this.doRaise}
+                onClick={this.onRaiseOkClicked}
         />
         <Button color='green' content='All In' disabled={allInDisabled}
-                onClick={() => this.editRaiseAmount(`${currentBalance}`)}
+                onClick={() => cls.games.changeRaiseAmount(`${allInAmount}`)}
         />
       </div>
     </Popup>;

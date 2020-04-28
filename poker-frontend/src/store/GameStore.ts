@@ -220,8 +220,7 @@ export class GameStore {
   @computed
   get canFold(): boolean {
     return this.currentGame &&
-      this.thisPlayer == this.currentPlayer &&
-      this.thisPlayer.roundBet == this.currentGame.roundBet;
+      this.thisPlayer == this.currentPlayer;
   }
 
   @computed
@@ -242,7 +241,7 @@ export class GameStore {
   get canRaise(): boolean {
     return this.currentGame &&
       this.thisPlayer == this.currentPlayer &&
-      this.currentBalance > this.currentGame.roundBet;
+      this.currentBalance + this.thisPlayer.roundBet > this.currentGame.roundBet;
   }
 
   public thisPlayerIsInGame(gameId: string): boolean {

@@ -23,7 +23,7 @@ object Rules {
     minHandUse: Int,
     maxHandUse: Int,
     boardSize: Int = 5,
-    playersLimit: Int = 9,
+    playersLimit: Int = 7,
     smallBlind: Int = 10,
     buyIn: Int = 200
   ): Rules = {
