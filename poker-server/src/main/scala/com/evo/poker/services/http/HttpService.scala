@@ -4,6 +4,7 @@ import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.server.Route
 import com.typesafe.config.Config
+import com.typesafe.scalalogging.Logger
 
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
@@ -12,6 +13,7 @@ import scala.util.{Failure, Success}
 import com.evo.poker.services.http.Codecs._
 
 class HttpService(config: Config, routes: Route, implicit val system: ActorSystem, implicit val ec: ExecutionContext) {
+  private val logger = Logger[HttpService]
 
   private var http: Future[Http.ServerBinding] = _
 
@@ -22,9 +24,9 @@ class HttpService(config: Config, routes: Route, implicit val system: ActorSyste
     http = Http().bindAndHandle(routes, bindHost, bindPort)
     http.onComplete {
       case Success(b) =>
-        system.log.info(s"Application is up and running at ${b.localAddress.getHostName}:${b.localAddress.getPort}")
+        logger.info(s"Application is up and running at ${b.localAddress.getHostName}:${b.localAddress.getPort}")
       case Failure(e) =>
-        system.log.error(s"Error starting application: {}", e.getMessage)
+        logger.error(s"Error starting application: {}", e.getMessage)
     }
   }
 

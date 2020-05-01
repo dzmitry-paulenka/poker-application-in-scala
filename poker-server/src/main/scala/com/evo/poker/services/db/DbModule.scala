@@ -11,11 +11,10 @@ import org.mongodb.scala.model.{IndexOptions, Indexes}
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 
-import com.evo.poker.services.actors.ActorsModule
 import com.evo.poker.services.config.ConfigModule
 
 @Module
-trait DbModule extends ActorsModule with ConfigModule {
+trait DbModule extends ConfigModule {
 
   lazy val codecRegistry = fromRegistries(
     fromProviders(classOf[UserEntity]),

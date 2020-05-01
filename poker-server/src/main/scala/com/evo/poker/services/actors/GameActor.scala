@@ -7,7 +7,7 @@ import scala.concurrent.duration._
 import com.evo.poker.logic._
 import com.evo.poker.services.actors.GameActor.{AutoTransition, GameTransitionError, GameTransitioned, TransitionCommand}
 
-class GameActor(actorService: ActorService, val gameId: String, val name: String, rules: Rules) extends Actor with Timers {
+class GameActor(actorService: ActorService, gameId: String, name: String, rules: Rules) extends Actor with Timers {
 
   private var game: Game = Game.create(rules, Deck.random(), name)
 
@@ -17,7 +17,7 @@ class GameActor(actorService: ActorService, val gameId: String, val name: String
     case AutoTransition =>
       doAutoTransition()
 
-    case TransitionCommand(transition, correlationData) =>
+    case TransitionCommand(transition, correlationKey) =>
       game
         .transition(transition)
         .swap
@@ -30,7 +30,7 @@ class GameActor(actorService: ActorService, val gameId: String, val name: String
           },
           error => {
             actorService.publish(
-              GameTransitionError(self, gameId, error, correlationData)
+              GameTransitionError(self, gameId, error, correlationKey)
             )
           }
         )
@@ -53,7 +53,7 @@ class GameActor(actorService: ActorService, val gameId: String, val name: String
 object GameActor {
   sealed trait MessageIn
   case object AutoTransition
-  case class TransitionCommand(gt: GameTransition, correlationData: Any) extends MessageIn
+  case class TransitionCommand(gt: GameTransition, correlationKey: String) extends MessageIn
 
   sealed trait Event
   case class GameTransitioned(
@@ -68,6 +68,6 @@ object GameActor {
     gameRef: ActorRef,
     gameId: String,
     error: String,
-    correlationData: Any
+    correlationKey: String
   ) extends Event
 }

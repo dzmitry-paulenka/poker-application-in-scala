@@ -13,6 +13,9 @@ package object dto {
   case class CheckTokenRequest(username: String, authToken: String)
 
   @JsonCodec
+  case class CheckTokenResponse(valid: Boolean)
+
+  @JsonCodec
   case class UserResponse(username: String, authToken: String)
 
   @JsonCodec

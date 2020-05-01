@@ -26,6 +26,7 @@ export class UiController {
 
   @action.bound
   public updateCreateDlg(key: string, value: any) {
+    const {balance} = rootStore.game;
     const {createDlg} = rootStore.ui;
     createDlg[key] = value;
 
@@ -34,7 +35,7 @@ export class UiController {
     const name = nameEditValue.trim();
     const smallBlind = parseInt(smallBlindEditValue);
     const buyIn = parseInt(buyInEditValue);
-    if (name.length == 0 || isNaN(smallBlind) || isNaN(smallBlind) || buyIn < smallBlind * 5) {
+    if (name.length == 0 || isNaN(smallBlind) || isNaN(smallBlind) || buyIn > balance || buyIn < smallBlind * 5) {
       createDlg.canCreate = false;
     } else {
       createDlg.canCreate = true;

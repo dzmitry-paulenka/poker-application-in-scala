@@ -12,7 +12,7 @@ import scala.concurrent.ExecutionContext
 
 import com.evo.poker.services.db.{UserEntity, UserRepository}
 import com.evo.poker.services.http.Codecs._
-import com.evo.poker.services.http.dto.{CheckTokenRequest, LoginRequest, SingupRequest, UserResponse}
+import com.evo.poker.services.http.dto._
 
 class EndpointUsers(repository: UserRepository, encoder: EncodingService)(implicit ec: ExecutionContext, mat: Materializer) {
   val routes = cors() {
@@ -44,13 +44,13 @@ class EndpointUsers(repository: UserRepository, encoder: EncodingService)(implic
       } ~ (post & path("check-token") & entity(as[CheckTokenRequest])) { req =>
         encoder.decodeJwt(req.authToken) match {
           case Left(_) =>
-            complete(HttpResponse(Unauthorized))
+            complete(CheckTokenResponse(false))
           case Right(userId) =>
             onSuccess(repository.findById(userId)) {
               case Some(user) =>
-                complete(UserResponse(req.username, req.authToken))
+                complete(CheckTokenResponse(true))
               case None =>
-                complete(HttpResponse(Unauthorized))
+                complete(CheckTokenResponse(false))
             }
         }
       }

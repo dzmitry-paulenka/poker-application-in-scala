@@ -17,11 +17,11 @@ class LobbyActor(actorService: ActorService) extends Actor {
     case PublishActiveGames() =>
       publishActiveGames()
 
-    case CreateGame(playerId, name, smallBlind, buyIn, correlationData) =>
+    case CreateGame(playerId, name, smallBlind, buyIn, correlationKey) =>
       val gameId = UUID.randomUUID().toString
 
       val gameRef = actorService.createGameActor(gameId, name, smallBlind, buyIn)
-      gameRef ! GameActor.TransitionCommand(Join(playerId), correlationData)
+      gameRef ! GameActor.TransitionCommand(Join(playerId), correlationKey)
 
       activeGames :+= ActiveGame(gameId, name, smallBlind, buyIn, 1)
       publishActiveGames()
@@ -48,8 +48,8 @@ class LobbyActor(actorService: ActorService) extends Actor {
 
 object LobbyActor {
   sealed trait MessageIn
-  case class PublishActiveGames()                                                                          extends MessageIn
-  case class CreateGame(playerId: String, name: String, smallBlind: Int, buyIn: Int, correlationData: Any) extends MessageIn
+  case class PublishActiveGames()                                                                            extends MessageIn
+  case class CreateGame(playerId: String, name: String, smallBlind: Int, buyIn: Int, correlationKey: String) extends MessageIn
 
   sealed trait Event
   case class ActiveGamesState(activeGames: Vector[ActiveGame]) extends Event

@@ -4,17 +4,25 @@ import akka.actor.{Actor, ActorRef, Timers}
 import cats._
 import cats.instances.all._
 import cats.syntax.all._
+import com.typesafe.scalalogging.Logger
 
 import scala.concurrent.duration._
 
 import com.evo.poker.logic._
 import com.evo.poker.services.actors.PlayerActor._
+import com.evo.poker.services.db.{UserEntity, UserRepository}
 import com.evo.poker.services.models.{ActiveGame, GameProjection}
 
-class PlayerActor(actorService: ActorService, val playerId: String) extends Actor with Timers {
+class PlayerActor(actorService: ActorService, repository: UserRepository, user: UserEntity) extends Actor with Timers {
+  private val logger = Logger[PlayerActor]
+
+  private val userId     = user._id.toHexString
+  private val playerId   = user.username
   private val lobbyActor = actorService.lobbyActor
 
-  private var balance: Int = 5000
+  private var balance: Int          = user.balance
+  private var blockedBalance: Int   = 0
+  private def availableBalance: Int = balance - blockedBalance
 
   private var currentGames: Vector[GameProjection] = Vector.empty
 
@@ -28,13 +36,13 @@ class PlayerActor(actorService: ActorService, val playerId: String) extends Acto
 
   override def receive: Receive = {
     case Connected(connectionId, connectionRef) =>
-      println(s"Player [$playerId]: New connection [$connectionId]")
+      logger.info(s"User [$playerId]: New connection [$connectionId]")
       connections += connectionId -> connectionRef
       lobbyActor ! LobbyActor.PublishActiveGames()
       broadcastPlayerState()
 
     case Disconnected(connectionId) =>
-      println(s"Player [$playerId]: Disconnected [$connectionId]")
+      logger.info(s"User [$playerId]: Disconnected [$connectionId]")
       connections -= connectionId
       broadcastPlayerState()
 
@@ -50,21 +58,21 @@ class PlayerActor(actorService: ActorService, val playerId: String) extends Acto
     case LobbyActor.ActiveGamesState(activeGames) =>
       broadcastMessage(ActiveGamesState(activeGames))
 
-    case GameActor.GameTransitioned(_, gameId, transition, prevGame, game) =>
+    case GameActor.GameTransitioned(gameActor, gameId, transition, prevGame, game) =>
       val gameIndex      = currentGames.indexWhere(_.id == gameId)
       val gameProjection = GameProjection.of(playerId, gameId, game)
 
       transition match {
         case Join(gPlayerId) if gPlayerId == playerId =>
-          game
-            .players
-            .find(_.id == playerId)
-            .foreach(p => balance -= p.balance)
+          blockedBalance += game.rules.buyIn
         case Leave(gPlayerId) if gPlayerId == playerId =>
           prevGame
             .players
             .find(_.id == playerId)
-            .foreach(p => balance += p.balance + p.resultMoneyWon)
+            .foreach(p => {
+              blockedBalance -= game.rules.buyIn
+              addToBalance(p.balance + p.resultMoneyWon - game.rules.buyIn)
+            })
         case _ =>
       }
 
@@ -79,28 +87,21 @@ class PlayerActor(actorService: ActorService, val playerId: String) extends Acto
       }
       broadcastPlayerState()
 
-    case GameActor.GameTransitionError(_, _, error, correlationData) =>
-      println("Got game transition error: " + error)
-      correlationData match {
-        case connectionId: String =>
-          connections.get(connectionId).foreach { _ ! ErrorMessage(error) }
+    case GameActor.GameTransitionError(_, _, error, correlationKey) =>
+      logger.error("Got game transition error: " + error)
+      connections.get(correlationKey).foreach {
+        _ ! ErrorMessage(error)
       }
   }
 
   private def handleClientEvent(connectionId: String, clientEvent: ClientEvent): Unit = {
     clientEvent match {
       case BuyChipsCommand(amount) =>
-        balance += amount
+        addToBalance(amount)
         broadcastPlayerState()
 
       case CreateGameCommand(name, smallBlind, buyIn) =>
-        if (balance >= buyIn) {
-          lobbyActor ! LobbyActor.CreateGame(playerId, name, smallBlind, buyIn, connectionId)
-        } else {
-          connections.get(connectionId).foreach {
-            _ ! ErrorMessage("Not enough money to create a game with that buy-in value")
-          }
-        }
+        lobbyActor ! LobbyActor.CreateGame(playerId, name, smallBlind, buyIn, connectionId)
 
       case TransitionCommand(gameId, gt) => {
         actorService.gameActor(gameId).foreach { gameActor =>
@@ -118,8 +119,15 @@ class PlayerActor(actorService: ActorService, val playerId: String) extends Acto
     }
   }
 
+  private def addToBalance(amountToAdd: Int): Unit = {
+    balance += amountToAdd
+
+    logger.info(s"Updating user balance: [userId: $userId, name: $playerId, balance = $balance, availableBalance = $availableBalance]")
+    repository.updateBalance(userId, balance)
+  }
+
   private def broadcastPlayerState(): Unit = {
-    broadcastMessage(PlayerState(playerId, balance, currentGames))
+    broadcastMessage(PlayerState(playerId, availableBalance, currentGames))
     timers.startSingleTimer("leave-games", LeaveAllGamesIfNoConnections, 5.seconds)
   }
 
@@ -133,8 +141,9 @@ class PlayerActor(actorService: ActorService, val playerId: String) extends Acto
     }
   }
 
-  private def broadcastMessage(message: ServerEvent): Unit =
+  private def broadcastMessage(message: ServerEvent): Unit = {
     connections.values.foreach(_ ! message)
+  }
 }
 
 object PlayerActor {

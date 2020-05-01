@@ -16,13 +16,14 @@ export class ProfileController {
 
     const auth = JSON.parse(authString);
     await this.httpPost('check-token', auth)
-      .then(newAuth => {
-        rootStore.isLoggedIn = true;
-        rootStore.username = newAuth.username;
-        rootStore.authToken = newAuth.authToken;
-        cls.connection.connect();
-      })
-      .catch(() => null);
+      .then(({valid}) => {
+        if (valid) {
+          rootStore.isLoggedIn = true;
+          rootStore.username = auth.username;
+          rootStore.authToken = auth.authToken;
+          cls.connection.connect();
+        }
+      });
   }
 
   @action.bound

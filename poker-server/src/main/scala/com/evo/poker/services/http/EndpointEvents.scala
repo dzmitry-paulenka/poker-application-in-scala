@@ -14,7 +14,7 @@ import org.reactivestreams.Publisher
 
 import com.evo.poker.services.actors.ActorService
 import com.evo.poker.services.actors.PlayerActor._
-import com.evo.poker.services.db.UserRepository
+import com.evo.poker.services.db.{UserEntity, UserRepository}
 import com.evo.poker.services.http.Codecs._
 
 class EndpointEvents(actorService: ActorService, repository: UserRepository, encoder: EncodingService)(implicit val materializer: Materializer) {
@@ -29,7 +29,7 @@ class EndpointEvents(actorService: ActorService, repository: UserRepository, enc
           onSuccess(repository.findById(userId)) {
             case Some(user) =>
               handleWebSocketMessages(
-                handlePlayerConnection(user.username)
+                handlePlayerConnection(user)
               )
             case None =>
               complete(Unauthorized)
@@ -38,8 +38,8 @@ class EndpointEvents(actorService: ActorService, repository: UserRepository, enc
     }
   }
 
-  private def handlePlayerConnection(playerId: String): Flow[Message, Message, Any] = {
-    val playerActor: ActorRef = actorService.playerActor(playerId)
+  private def handlePlayerConnection(user: UserEntity): Flow[Message, Message, Any] = {
+    val playerActor: ActorRef = actorService.playerActor(user)
     val connectionId: String  = UUID.randomUUID().toString
 
     val (connectionRef: ActorRef, publisher: Publisher[TextMessage.Strict]) = {

@@ -1,6 +1,8 @@
 package com.evo.poker.services.db
 
 import org.mongodb.scala.bson.ObjectId
+import org.mongodb.scala.model.Filters._
+import org.mongodb.scala.model.Updates._
 import org.mongodb.scala.{Document, MongoCollection}
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -25,8 +27,8 @@ class UserRepository(userCollection: MongoCollection[UserEntity]) {
   def updateBalance(id: String, balance: Int): Future[Boolean] =
     userCollection
       .updateOne(
-        Document("_id" -> new ObjectId(id)),
-        Document("balance" -> balance)
+        equal("_id", new ObjectId(id)),
+        set("balance", balance)
       )
       .head
       .map { _.getModifiedCount > 0 }
