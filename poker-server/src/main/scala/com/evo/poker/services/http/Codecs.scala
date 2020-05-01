@@ -1,10 +1,10 @@
 package com.evo.poker.services.http
 
-import io.circe.{Codec, Decoder, Encoder}
+import io.circe._
 import io.circe.generic.extras.Configuration
-import io.circe.generic.extras.semiauto.{deriveConfiguredCodec, deriveEnumerationCodec}
+import io.circe.generic.extras.semiauto._
 
-import com.evo.poker.logic.{Card, GameTransition, Phase, Rank, Suit}
+import com.evo.poker.logic._
 import com.evo.poker.services.actors.PlayerActor._
 
 object Codecs {

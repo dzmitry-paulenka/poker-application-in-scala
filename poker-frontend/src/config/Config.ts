@@ -5,11 +5,11 @@ export class Config {
     return "localhost:8080";
   }
 
-  public static apiUrl(): string {
-    return `http://${this.hostPort()}`;
+  public static usersApiUrl(): string {
+    return `http://${this.hostPort()}/api/users`;
   }
 
-  public static websocketUrl(): string {
-    return `ws://${this.hostPort()}`;
+  public static websocketBaseUrl(): string {
+    return `ws://${this.hostPort()}/api/events`;
   }
 }

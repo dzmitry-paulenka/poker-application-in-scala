@@ -9,9 +9,9 @@ export class Controllers {
   public readonly games = new GamesController();
   public readonly ui = new UiController();
 
-  public initialize() {
-    this.profile.init();
-    this.games.init();
+  public async initialize() {
+    await this.profile.init();
+    await this.games.init();
   }
 }
 

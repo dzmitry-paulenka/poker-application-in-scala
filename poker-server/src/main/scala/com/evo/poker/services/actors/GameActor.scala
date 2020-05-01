@@ -5,22 +5,17 @@ import akka.actor.{Actor, ActorRef, Timers}
 import scala.concurrent.duration._
 
 import com.evo.poker.logic._
-import com.evo.poker.services.Services
 import com.evo.poker.services.actors.GameActor.{AutoTransition, GameTransitionError, GameTransitioned, TransitionCommand}
 
-class GameActor(val gameId: String, val name: String, val smallBlind: Int, val buyIn: Int) extends Actor with Timers {
-  private val actorService = Services.actor
+class GameActor(actorService: ActorService, val gameId: String, val name: String, rules: Rules) extends Actor with Timers {
 
-  private var game: Game = Game.create(Rules.texas(smallBlind, buyIn), Deck.random(), name)
+  private var game: Game = Game.create(rules, Deck.random(), name)
 
   this.rescheduleAutoTransition()
 
   override def receive: Receive = {
     case AutoTransition =>
-      if (game.canDeal)
-        self ! TransitionCommand(Deal, "auto-transition")
-//      else if (game.canNextRound)
-//        self ! TransitionCommand(NextRound, "auto-transition")
+      doAutoTransition()
 
     case TransitionCommand(transition, correlationData) =>
       game
@@ -32,7 +27,6 @@ class GameActor(val gameId: String, val name: String, val smallBlind: Int, val b
               GameTransitioned(self, gameId, transition, game, newGame)
             )
             game = newGame
-            rescheduleAutoTransition()
           },
           error => {
             actorService.publish(
@@ -40,6 +34,15 @@ class GameActor(val gameId: String, val name: String, val smallBlind: Int, val b
             )
           }
         )
+  }
+
+  private def doAutoTransition(): Unit = {
+    if (game.canDeal)
+      self ! TransitionCommand(Deal, "auto-transition")
+//    else if (game.canNextRound)
+//      self ! TransitionCommand(NextRound, "auto-transition")
+
+    rescheduleAutoTransition()
   }
 
   private def rescheduleAutoTransition(): Unit = {

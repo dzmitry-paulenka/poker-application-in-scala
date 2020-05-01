@@ -8,13 +8,11 @@ import cats.syntax.all._
 import scala.concurrent.duration._
 
 import com.evo.poker.logic._
-import com.evo.poker.services.Services
 import com.evo.poker.services.actors.PlayerActor._
 import com.evo.poker.services.models.{ActiveGame, GameProjection}
 
-class PlayerActor(val playerId: String) extends Actor with Timers {
-  private val actorService = Services.actor
-  private val lobbyActor   = actorService.lobbyActor
+class PlayerActor(actorService: ActorService, val playerId: String) extends Actor with Timers {
+  private val lobbyActor = actorService.lobbyActor
 
   private var balance: Int = 5000
 
@@ -105,7 +103,6 @@ class PlayerActor(val playerId: String) extends Actor with Timers {
         }
 
       case TransitionCommand(gameId, gt) => {
-        // TODO: decrease balance on Join
         actorService.gameActor(gameId).foreach { gameActor =>
           gt match {
             case NextRound =>

@@ -10,6 +10,9 @@ export class RootStore {
   public username: string = null;
 
   @observable
+  public authToken: string = null;
+
+  @observable
   public game: GameStore = new GameStore();
 
   @observable

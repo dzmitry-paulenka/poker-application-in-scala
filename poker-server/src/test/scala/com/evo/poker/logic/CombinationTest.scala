@@ -3,12 +3,12 @@ package com.evo.poker.logic
 import cats._
 import cats.instances.all._
 import cats.syntax.all._
-import org.scalatest._
+import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
 import com.evo.poker.parser.PokerParser
 
-class CombinationTest extends FlatSpec with Matchers {
+class CombinationTest extends AnyFlatSpec with Matchers {
   private val texas = PokerParser.of(Rules.texas())
 
   "Combination" should "correctly determine tier" in {

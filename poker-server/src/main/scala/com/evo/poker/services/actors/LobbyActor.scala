@@ -2,17 +2,13 @@ package com.evo.poker.services.actors
 
 import java.util.UUID
 
-import akka.actor.{Actor, PoisonPill, Props}
+import akka.actor.{Actor, PoisonPill}
 
 import com.evo.poker.logic.{Ended, Join}
-import com.evo.poker.services.Services
 import com.evo.poker.services.actors.LobbyActor.{ActiveGamesState, CreateGame, PublishActiveGames}
 import com.evo.poker.services.models.ActiveGame
 
-class LobbyActor extends Actor {
-  private val actorService = Services.actor
-  private val actorSystem  = actorService.system
-
+class LobbyActor(actorService: ActorService) extends Actor {
   private var activeGames: Vector[ActiveGame] = Vector()
 
   actorService.subscribe(self, classOf[GameActor.GameTransitioned])
@@ -52,9 +48,8 @@ class LobbyActor extends Actor {
 
 object LobbyActor {
   sealed trait MessageIn
-  case class PublishActiveGames() extends MessageIn
-  case class CreateGame(playerId: String, name: String, smallBlind: Int, buyIn: Int, correlationData: Any)
-      extends MessageIn
+  case class PublishActiveGames()                                                                          extends MessageIn
+  case class CreateGame(playerId: String, name: String, smallBlind: Int, buyIn: Int, correlationData: Any) extends MessageIn
 
   sealed trait Event
   case class ActiveGamesState(activeGames: Vector[ActiveGame]) extends Event

@@ -53,7 +53,8 @@ export class ConnectionController {
     this.disconnect();
 
     const username = rootStore.username;
-    const wsUrl = `${Config.websocketUrl()}/player-events/${username}`;
+    const authToken = rootStore.authToken;
+    const wsUrl = `${Config.websocketBaseUrl()}?authToken=${encodeURIComponent(authToken)}`;
 
     const socket = new ReconnectingWebSocket(wsUrl);
     this.socket = socket;

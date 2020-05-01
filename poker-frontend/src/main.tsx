@@ -5,7 +5,7 @@ import * as ReactDOM from 'react-dom';
 import {hot} from 'react-hot-loader/root';
 
 const bootstrap = async () => {
-  cls.initialize();
+  await cls.initialize();
 
   const rootElement = document.getElementById('root');
   const App = hot(({}) => (<Root/>));

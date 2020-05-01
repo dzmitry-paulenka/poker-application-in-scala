@@ -6,7 +6,7 @@ import cats.syntax.all._
 import io.circe.Encoder
 import io.circe.parser._
 import io.circe.syntax._
-import org.scalatest._
+import org.scalatest.flatspec.AnyFlatSpec
 
 import com.evo.poker.GameTestHelper
 import com.evo.poker.logic._
@@ -14,7 +14,7 @@ import com.evo.poker.services.actors.PlayerActor.{Ping, ServerEvent}
 import com.evo.poker.services.http.Codecs._
 import com.evo.poker.services.models.GameProjection
 
-class CodecsTest extends FlatSpec with GameTestHelper {
+class CodecsTest extends AnyFlatSpec with GameTestHelper {
 
   it should "correctly serialize to json" in {
     assertJson[ServerEvent](Ping, """{"eventType": "ping"}""")
@@ -24,8 +24,10 @@ class CodecsTest extends FlatSpec with GameTestHelper {
   }
 
   it should "correctly serialize game to json" in {
-    val game       = sampleGame(2, "Ac7c Qs9h")
-      .flatMap(_.deal()).right.value
+    val game = sampleGame(2, "Ac7c Qs9h")
+      .flatMap(_.deal())
+      .right
+      .value
 
     val projection = GameProjection.of("a", "game1", game)
     assertJson[GameProjection](

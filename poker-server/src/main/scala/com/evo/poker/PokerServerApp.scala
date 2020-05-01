@@ -1,11 +1,14 @@
 package com.evo.poker
 
-import com.evo.poker.services.Services
-
 object PokerServerApp extends App {
-  Services.init()
+  val modules = new PokerModules
+
+  import modules._
+
+  httpService.start()
 
   sys.addShutdownHook {
-    Services.stop()
+    httpService.stop()
+    actorService.stop()
   }
 }

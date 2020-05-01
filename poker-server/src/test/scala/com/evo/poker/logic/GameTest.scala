@@ -3,12 +3,12 @@ package com.evo.poker.logic
 import cats._
 import cats.instances.all._
 import cats.syntax.all._
-import org.scalatest._
+import org.scalatest.flatspec.AnyFlatSpec
 
 import com.evo.poker.GameTestHelper
 
 //noinspection ScalaDeprecation
-class GameTest extends FlatSpec with GameTestHelper {
+class GameTest extends AnyFlatSpec with GameTestHelper {
 
   implicit class UnsafeGameOpts(g: Game) {
     def player(id: String): Player =
