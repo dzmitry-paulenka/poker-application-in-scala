@@ -249,6 +249,14 @@ export class GameStore {
   }
 
   @computed
+  get callAmount(): number {
+    if (!this.canCall)
+      return 0;
+
+    return Math.min(this.currentBalance, this.currentGame.roundBet - this.thisPlayer.roundBet);
+  }
+
+  @computed
   get cardsDealt(): boolean {
     return this.thisPlayer && this.thisPlayer.hand.length > 0;
   }

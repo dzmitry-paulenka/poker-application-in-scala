@@ -1,6 +1,6 @@
 export class Config {
   public static isSecure(): boolean {
-    return window.location.protocol == 'https';
+    return window.location.protocol == 'https:';
   }
 
   public static hostPort(): string {
