@@ -1,16 +1,10 @@
-name := "poker-server"
-
-version := "0.1"
-
 scalaVersion := "2.13.1"
+scalacOptions ++= Seq( "-Ymacro-annotations" )
 
-Compile / mainClass := Some("com.evo.poker.PokerServerApp")
+enablePlugins(JavaAppPackaging)
 
-scalacOptions ++= Seq(
-//  "-deprecation",
-//  "-feature",
-  "-Ymacro-annotations"
-)
+name := "poker-api"
+version := "0.1"
 
 libraryDependencies ++= Seq(
   "org.typelevel"              %% "cats-core" % "2.1.0",

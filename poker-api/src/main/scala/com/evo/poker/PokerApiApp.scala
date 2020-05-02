@@ -1,6 +1,6 @@
 package com.evo.poker
 
-object PokerServerApp extends App {
+object PokerApiApp extends App {
   val modules = new PokerModules
 
   import modules._

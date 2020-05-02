@@ -4,7 +4,8 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "webpack-dev-server --mode development --hot --progress --colors --port 3000",
+    "dev": "webpack-dev-server --mode development --hot --progress --colors --port 3000",
+    "start": "npx serve build",
     "build": "webpack -p --progress --colors",
     "prettier": "prettier --write \"src/**/*.{ts,tsx,css}\""
   },
@@ -17,6 +18,7 @@
     "@types/react-router": "^4.4.3",
     "@types/webpack": "^4.4.23",
     "babel-loader": "^8.0.5",
+    "copy-webpack-plugin": "^5.1.1",
     "css-loader": "^2.1.0",
     "file-loader": "^3.0.1",
     "html-loader": "^1.0.0-alpha.0",
@@ -33,6 +35,7 @@
     "postcss-url": "^8.0.0",
     "prettier": "^1.16.0",
     "react-hot-loader": "^4.6.3",
+    "serve": "^11.3.0",
     "style-loader": "^0.23.1",
     "ts-loader": "^5.3.3",
     "typescript": "^3.2.4",
