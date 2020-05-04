@@ -8,7 +8,7 @@ import com.evo.poker.services.http.Codecs._
 import com.evo.poker.util.Util.ift
 
 @JsonCodec
-case class PlayerProjection(
+final case class PlayerProjection(
   id: String,
   balance: Int = 0,
   hand: Hand = Nil,
@@ -22,7 +22,7 @@ case class PlayerProjection(
 )
 
 @JsonCodec
-case class GameProjection(
+final case class GameProjection(
   id: String,
   name: String,
   phase: Phase,

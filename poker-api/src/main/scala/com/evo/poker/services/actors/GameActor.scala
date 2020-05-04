@@ -5,7 +5,7 @@ import akka.actor.{Actor, ActorRef, Timers}
 import scala.concurrent.duration._
 
 import com.evo.poker.logic._
-import com.evo.poker.services.actors.GameActor.{AutoTransition, GameTransitionError, GameTransitioned, TransitionCommand}
+import com.evo.poker.services.actors.GameActor.{AutoTransition, GameTransitionErrorEvent, GameTransitionedEvent, TransitionCommand}
 
 class GameActor(actorService: ActorService, gameId: String, name: String, rules: Rules) extends Actor with Timers {
 
@@ -24,13 +24,13 @@ class GameActor(actorService: ActorService, gameId: String, name: String, rules:
         .fold(
           newGame => {
             actorService.publish(
-              GameTransitioned(self, gameId, transition, game, newGame)
+              GameTransitionedEvent(self, gameId, transition, game, newGame)
             )
             game = newGame
           },
           error => {
             actorService.publish(
-              GameTransitionError(self, gameId, error, correlationKey)
+              GameTransitionErrorEvent(self, gameId, error, correlationKey)
             )
           }
         )
@@ -53,21 +53,21 @@ class GameActor(actorService: ActorService, gameId: String, name: String, rules:
 object GameActor {
   sealed trait MessageIn
   case object AutoTransition
-  case class TransitionCommand(gt: GameTransition, correlationKey: String) extends MessageIn
+  final case class TransitionCommand(gt: GameTransition, correlationKey: String) extends MessageIn
 
-  sealed trait Event
-  case class GameTransitioned(
+  sealed trait MessageOut
+  final case class GameTransitionedEvent(
     gameRef: ActorRef,
     gameId: String,
     transition: GameTransition,
     prevGame: Game,
     game: Game
-  ) extends Event
+  ) extends MessageOut
 
-  case class GameTransitionError(
+  final case class GameTransitionErrorEvent(
     gameRef: ActorRef,
     gameId: String,
     error: String,
     correlationKey: String
-  ) extends Event
+  ) extends MessageOut
 }

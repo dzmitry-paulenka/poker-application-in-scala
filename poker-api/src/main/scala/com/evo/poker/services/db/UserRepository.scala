@@ -17,6 +17,7 @@ class UserRepository(userCollection: MongoCollection[UserEntity]) {
       .head
       .map(Option(_))
 
+
   def findByUsername(username: String): Future[Option[UserEntity]] =
     userCollection
       .find(Document("username" -> username))

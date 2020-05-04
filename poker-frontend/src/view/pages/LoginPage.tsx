@@ -3,7 +3,7 @@ import {action} from 'mobx';
 import {observer} from 'mobx-react';
 import * as React from 'react';
 
-import {Button, Divider, Form, Grid, Header, Message, Segment} from 'semantic-ui-react'
+import {Button, Divider, Form, Header, Message, Segment} from 'semantic-ui-react'
 
 @observer
 export class LoginPage extends React.Component<any, any> {
@@ -63,7 +63,7 @@ export class LoginPage extends React.Component<any, any> {
     const {username, password, isLogin, hasErrors, error} = this.state;
 
     return (
-      <Grid.Column style={{maxWidth: 450}}>
+      <div style={{maxWidth: 450, minWidth: 450, height: 305, margin: 'auto'}}>
         <Header as='h2' color='teal' textAlign='center'>
           {isLogin ? 'Log-in to your account' : 'Sign up'}
         </Header>
@@ -97,7 +97,7 @@ export class LoginPage extends React.Component<any, any> {
         <div style={{textAlign: 'center'}}>
           <a href="#" onClick={this.toggleLoginSignup}>{!isLogin ? 'Login' : 'Sign Up'}</a>
         </div>
-      </Grid.Column>
+      </div>
     );
   }
 }

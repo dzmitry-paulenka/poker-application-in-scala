@@ -10,8 +10,18 @@ import com.evo.poker.services.actors.PlayerActor._
 object Codecs {
   implicit val cardEncoder: Encoder[Card] =
     Encoder.forProduct2[Card, Char, Char]("rank", "suit")(card => (card.rank.symbol, card.suit.symbol))
-  implicit val cardDecoder: Decoder[Card] =
-    Decoder.forProduct2[Card, Char, Char]("rank", "suit")((r, s) => Card(Rank.fromChar(r).get, Suit.fromChar(s).get))
+
+  implicit val cardDecoder: Decoder[Card] = new Decoder[Card] {
+    final def apply(c: HCursor): Decoder.Result[Card] =
+      for {
+        rChar <- c.downField("rank").as[Char]
+        rank  <- Rank.fromChar(rChar).toRight(DecodingFailure(s"invalid rank $rChar", c.history))
+        sChar <- c.downField("suit").as[Char]
+        suit  <- Suit.fromChar(sChar).toRight(DecodingFailure(s"invalid suit $sChar", c.history))
+      } yield {
+        new Card(rank, suit)
+      }
+  }
 
   implicit val phaseCodec: Codec[Phase] = EnumCodecs.phaseCodec
 

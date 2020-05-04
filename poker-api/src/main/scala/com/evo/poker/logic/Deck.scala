@@ -17,7 +17,7 @@ sealed abstract class Deck() {
     deal(1).leftMap(_.head)
 }
 
-class RandomDeck(cards: List[Card], resetSeed: Long) extends Deck {
+final class RandomDeck(cards: List[Card], resetSeed: Long) extends Deck {
 
   override def reset(): Deck =
     Deck.random(resetSeed);
@@ -27,7 +27,7 @@ class RandomDeck(cards: List[Card], resetSeed: Long) extends Deck {
   }
 }
 
-class CardListDeck(cards: List[Card]) extends Deck {
+final class CardListDeck(cards: List[Card]) extends Deck {
 
   override def reset(): Deck = this
 
@@ -37,7 +37,6 @@ class CardListDeck(cards: List[Card]) extends Deck {
 }
 
 object Deck {
-  private val rand = new Random()
 
   def of(cards: List[Card]): Deck = {
     new CardListDeck(cards)

@@ -6,7 +6,7 @@ import cats.syntax.all._
 
 import com.evo.poker.logic.Card.Hand
 
-case class Player(
+final case class Player(
   id: String,
   balance: Int = 0,
   hand: Hand = Nil,
@@ -86,12 +86,11 @@ case class Player(
 
   def raise(gameRoundBet: Int, raiseAmount: Int): OrError[Player] = {
     if (raiseAmount <= 0)
-      return s"Player $id can't raise amount for less-or-eq than 0".asLeft
-
-    if (balance < gameRoundBet + raiseAmount - roundBet)
-      return s"Player $id don't have funds to raise $raiseAmount, current balance is $balance".asLeft
-
-    bet(gameRoundBet + raiseAmount - roundBet)
+      s"Player $id can't raise amount for less-or-eq than 0".asLeft
+    else if (balance < gameRoundBet + raiseAmount - roundBet)
+      s"Player $id don't have funds to raise $raiseAmount, current balance is $balance".asLeft
+    else
+      bet(gameRoundBet + raiseAmount - roundBet)
   }
 
   def bet(amount: Int, blind: Boolean = false): OrError[Player] = {

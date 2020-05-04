@@ -1,5 +1,7 @@
 package com.evo.poker.services.actors
 
+import java.util.concurrent.ConcurrentHashMap
+
 import akka.actor.{ActorRef, ActorSystem, Props}
 import akka.stream._
 import com.typesafe.scalalogging.Logger
@@ -12,10 +14,10 @@ import com.evo.poker.services.db.{UserEntity, UserRepository}
 class ActorService(repository: UserRepository, system: ActorSystem, ec: ExecutionContext, mat: Materializer) {
   private val logger = Logger[ActorService]
 
-  private var playerActors: Map[String, ActorRef] = Map.empty[String, ActorRef]
-  private var gameActors: Map[String, ActorRef]   = Map.empty[String, ActorRef]
+  private val playerActors: ConcurrentHashMap[String, ActorRef] = new ConcurrentHashMap[String, ActorRef]()
+  private val gameActors: ConcurrentHashMap[String, ActorRef]   = new ConcurrentHashMap[String, ActorRef]()
 
-  var lobbyActor: ActorRef = system.actorOf(Props(classOf[LobbyActor], this))
+  val lobbyActor: ActorRef = system.actorOf(Props(classOf[LobbyActor], this))
 
   def stop(): Unit = {
     system.terminate()
@@ -29,31 +31,31 @@ class ActorService(repository: UserRepository, system: ActorSystem, ec: Executio
     system.eventStream.publish(event)
   }
 
-  def createGameActor(gameId: String, name: String, smallBlind: Int, buyIn: Int): ActorRef = {
-    logger.info(s"Creating new game actor for Game(name: $name, id: $gameId)")
-    val ref = system.actorOf(Props(classOf[GameActor], this, gameId, name, Rules.texas(smallBlind, buyIn)))
-    gameActors += gameId -> ref
-    ref
+  def ensureGameActor(gameId: String, name: String, smallBlind: Int, buyIn: Int): ActorRef = {
+    gameActors.computeIfAbsent(
+      gameId,
+      _ => {
+        logger.info(s"Creating new game actor for Game(name: $name, id: $gameId)")
+        system.actorOf(Props(classOf[GameActor], this, gameId, name, Rules.texas(smallBlind, buyIn)))
+      }
+    )
   }
 
   def gameActor(gameId: String): Option[ActorRef] = {
-    gameActors.get(gameId)
+    Option(gameActors.get(gameId))
   }
 
-  def playerActor(user: UserEntity): ActorRef = {
-    // todo: not thread-safe
+  def ensurePlayerActor(user: UserEntity): ActorRef = {
     val userId = user._id.toHexString
-    playerActors.get(userId) match {
-      case Some(ref) => ref
-      case None => {
+    playerActors.computeIfAbsent(
+      userId,
+      _ => {
         val username = user.username
         val balance  = user.balance
-        logger.info(s"Creating new player actor for User(id: $userId, username: $username, balance: $balance)")
 
-        val ref = system.actorOf(Props(classOf[PlayerActor], this, repository, user))
-        playerActors += userId -> ref
-        ref
+        logger.info(s"Creating new player actor for User(id: $userId, username: $username, balance: $balance)")
+        system.actorOf(Props(classOf[PlayerActor], this, repository, user))
       }
-    }
+    )
   }
 }

@@ -116,7 +116,7 @@ export class TableView extends React.Component<any, any> {
 
     return (
       <div key={key} className={classes} style={{width: width, height: height, color: color}}>
-        <div className={style.rank} style={{fontSize: height / 2, lineHeight: `${height / 2}px`}}>
+        <div className={style.rank} style={{fontSize: height / 2 - 2, lineHeight: `${height / 2 - 2}px`}}>
           {rank}
         </div>
         <Image

@@ -10,7 +10,7 @@ import org.scalatest.flatspec.AnyFlatSpec
 
 import com.evo.poker.GameTestHelper
 import com.evo.poker.logic._
-import com.evo.poker.services.actors.PlayerActor.{Ping, ServerEvent}
+import com.evo.poker.services.actors.PlayerActor.{ClientEvent, Ping, ServerEvent}
 import com.evo.poker.services.http.Codecs._
 import com.evo.poker.services.models.GameProjection
 
@@ -21,6 +21,11 @@ class CodecsTest extends AnyFlatSpec with GameTestHelper {
     assertJson[Phase](PreFlop, """ "pre-flop" """)
     assertJson[Card](Card(Rank.Ace, Suit.Hearts), """ {"rank": "A", "suit": "h"} """)
     assertJson[GameTransition](Join("id1"), """ {"transition": "join", "playerId": "id1"} """)
+  }
+
+  it should "correctly detects decoding errors" in {
+    decode[Card](""" {"rank": "e", "suit": "t"} """).left.value.getMessage should include("invalid rank e")
+    decode[Card](""" {"rank": "A", "suit": "t"} """).left.value.getMessage should include("invalid suit t")
   }
 
   it should "correctly serialize game to json" in {

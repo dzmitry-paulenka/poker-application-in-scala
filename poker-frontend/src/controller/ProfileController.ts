@@ -1,6 +1,7 @@
 import {Config} from 'app/config/Config';
 import {BuyChipsCommand} from 'app/controller/ConnectionController';
 import {cls} from 'app/controller/Controllers';
+import {GameStore} from 'app/store/GameStore';
 import {rootStore} from 'app/store/RootStore';
 import {action} from 'mobx';
 
@@ -42,6 +43,7 @@ export class ProfileController {
     rootStore.isLoggedIn = false;
     rootStore.username = null;
     rootStore.authToken = null;
+    rootStore.game = new GameStore();
     localStorage.removeItem('auth');
     cls.connection.disconnect();
   }

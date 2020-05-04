@@ -19,18 +19,10 @@ export class LobbyPage extends React.Component<any, any> {
     }
 
     return (
-      <Grid.Column stretched style={{minWidth: 980, maxWidth: 980, height: 650}}>
-        <Grid stretched>
-          <Grid.Row stretched>
-            <Grid.Column width={4}>
-              <PersonalPanel/>
-            </Grid.Column>
-            <Grid.Column width={12}>
-              <GameView/>
-            </Grid.Column>
-          </Grid.Row>
-        </Grid>
-      </Grid.Column>
+      <div style={{display: 'flex', maxWidth: 940, minWidth: 940, height: 622, margin: 'auto'}}>
+        <PersonalPanel/>
+        <GameView/>
+      </div>
     );
   }
 

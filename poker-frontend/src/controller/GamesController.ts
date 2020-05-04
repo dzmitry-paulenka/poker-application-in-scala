@@ -1,12 +1,11 @@
 import {CreateGameCommand, GameTransition, TransitionCommand} from 'app/controller/ConnectionController';
 import {cls} from 'app/controller/Controllers';
-import {ActiveGame, Game, Player} from 'app/store/GameStore';
+import {ActiveGame, Game} from 'app/store/GameStore';
 import {rootStore} from 'app/store/RootStore';
-import {JoinDlg} from 'app/store/UiStore';
 import {Assert} from 'app/util/Assert';
 import {action, observable} from 'mobx';
 
-import {deserialize, serializable, list, object} from 'serializr'
+import {deserialize, list, object, serializable} from 'serializr'
 
 export class PlayerState {
   @observable

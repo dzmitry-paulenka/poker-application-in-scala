@@ -74,7 +74,7 @@ object Suit {
     Order.by[Suit, Char](_.symbol)
 }
 
-case class Card(rank: Rank, suit: Suit) {
+final case class Card(rank: Rank, suit: Suit) {
   override def toString: String =
     s"${rank.symbol}${suit.symbol}"
 }

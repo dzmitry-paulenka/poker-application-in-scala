@@ -5,7 +5,7 @@ import io.circe.generic.JsonCodec
 import com.evo.poker.services.http.Codecs._
 
 @JsonCodec
-case class ActiveGame(
+final case class ActiveGame(
   id: String,
   name: String,
   smallBlind: Int,

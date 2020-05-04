@@ -5,13 +5,13 @@ import java.util.UUID
 import akka.actor.{Actor, PoisonPill}
 
 import com.evo.poker.logic.{Ended, Join}
-import com.evo.poker.services.actors.LobbyActor.{ActiveGamesState, CreateGame, PublishActiveGames}
+import com.evo.poker.services.actors.LobbyActor.{ActiveGamesStateEvent, CreateGame, PublishActiveGames}
 import com.evo.poker.services.models.ActiveGame
 
 class LobbyActor(actorService: ActorService) extends Actor {
   private var activeGames: Vector[ActiveGame] = Vector()
 
-  actorService.subscribe(self, classOf[GameActor.GameTransitioned])
+  actorService.subscribe(self, classOf[GameActor.GameTransitionedEvent])
 
   override def receive: Receive = {
     case PublishActiveGames() =>
@@ -20,13 +20,13 @@ class LobbyActor(actorService: ActorService) extends Actor {
     case CreateGame(playerId, name, smallBlind, buyIn, correlationKey) =>
       val gameId = UUID.randomUUID().toString
 
-      val gameRef = actorService.createGameActor(gameId, name, smallBlind, buyIn)
+      val gameRef = actorService.ensureGameActor(gameId, name, smallBlind, buyIn)
       gameRef ! GameActor.TransitionCommand(Join(playerId), correlationKey)
 
       activeGames :+= ActiveGame(gameId, name, smallBlind, buyIn, 1)
       publishActiveGames()
 
-    case GameActor.GameTransitioned(gameRef, gameId, _, _, game) =>
+    case GameActor.GameTransitionedEvent(gameRef, gameId, _, _, game) =>
       val index = activeGames.indexWhere(_.id == gameId)
       if (index >= 0) {
         if (game.players.isEmpty || game.phase == Ended) {
@@ -42,15 +42,15 @@ class LobbyActor(actorService: ActorService) extends Actor {
   }
 
   private def publishActiveGames(): Unit = {
-    actorService.publish(ActiveGamesState(activeGames))
+    actorService.publish(ActiveGamesStateEvent(activeGames))
   }
 }
 
 object LobbyActor {
   sealed trait MessageIn
-  case class PublishActiveGames()                                                                            extends MessageIn
-  case class CreateGame(playerId: String, name: String, smallBlind: Int, buyIn: Int, correlationKey: String) extends MessageIn
+  final case class PublishActiveGames()                                                                            extends MessageIn
+  final case class CreateGame(playerId: String, name: String, smallBlind: Int, buyIn: Int, correlationKey: String) extends MessageIn
 
-  sealed trait Event
-  case class ActiveGamesState(activeGames: Vector[ActiveGame]) extends Event
+  sealed trait MessageOut
+  final case class ActiveGamesStateEvent(activeGames: Vector[ActiveGame]) extends MessageOut
 }

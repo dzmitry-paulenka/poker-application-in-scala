@@ -28,9 +28,9 @@ class PlayerActor(actorService: ActorService, repository: UserRepository, user: 
 
   private var connections: Map[String, ActorRef] = Map.empty[String, ActorRef]
 
-  actorService.subscribe(self, classOf[GameActor.GameTransitioned])
-  actorService.subscribe(self, classOf[GameActor.GameTransitionError])
-  actorService.subscribe(self, classOf[LobbyActor.ActiveGamesState])
+  actorService.subscribe(self, classOf[GameActor.GameTransitionedEvent])
+  actorService.subscribe(self, classOf[GameActor.GameTransitionErrorEvent])
+  actorService.subscribe(self, classOf[LobbyActor.ActiveGamesStateEvent])
 
   timers.startTimerWithFixedDelay("ping-timer", PingClients, 10.seconds)
 
@@ -55,10 +55,10 @@ class PlayerActor(actorService: ActorService, repository: UserRepository, user: 
     case LeaveAllGamesIfNoConnections =>
       leaveAllGamesIfNoConnections()
 
-    case LobbyActor.ActiveGamesState(activeGames) =>
+    case LobbyActor.ActiveGamesStateEvent(activeGames) =>
       broadcastMessage(ActiveGamesState(activeGames))
 
-    case GameActor.GameTransitioned(gameActor, gameId, transition, prevGame, game) =>
+    case GameActor.GameTransitionedEvent(gameActor, gameId, transition, prevGame, game) =>
       val gameIndex      = currentGames.indexWhere(_.id == gameId)
       val gameProjection = GameProjection.of(playerId, gameId, game)
 
@@ -87,7 +87,7 @@ class PlayerActor(actorService: ActorService, repository: UserRepository, user: 
       }
       broadcastPlayerState()
 
-    case GameActor.GameTransitionError(_, _, error, correlationKey) =>
+    case GameActor.GameTransitionErrorEvent(_, _, error, correlationKey) =>
       logger.error("Got game transition error: " + error)
       connections.get(correlationKey).foreach {
         _ ! ErrorMessage(error)
@@ -149,22 +149,22 @@ class PlayerActor(actorService: ActorService, repository: UserRepository, user: 
 object PlayerActor {
 
   sealed trait MessageIn
-  case class Connected(connectionId: String, connectionRef: ActorRef)  extends MessageIn
-  case class Disconnected(connectionId: String)                        extends MessageIn
-  case class ConnectionEvent(connectionId: String, event: ClientEvent) extends MessageIn
-  case object PingClients                                              extends MessageIn
-  case object LeaveAllGamesIfNoConnections                             extends MessageIn
+  final case class Connected(connectionId: String, connectionRef: ActorRef)  extends MessageIn
+  final case class Disconnected(connectionId: String)                        extends MessageIn
+  final case class ConnectionEvent(connectionId: String, event: ClientEvent) extends MessageIn
+  case object PingClients                                                    extends MessageIn
+  case object LeaveAllGamesIfNoConnections                                   extends MessageIn
 
   sealed trait ClientEvent
-  case object Pong                                                         extends ClientEvent
-  case class BuyChipsCommand(amount: Int)                                  extends ClientEvent
-  case class CreateGameCommand(name: String, smallBlind: Int, buyIn: Int)  extends ClientEvent
-  case class TransitionCommand(gameId: String, transition: GameTransition) extends ClientEvent
+  case object Pong                                                               extends ClientEvent
+  final case class BuyChipsCommand(amount: Int)                                  extends ClientEvent
+  final case class CreateGameCommand(name: String, smallBlind: Int, buyIn: Int)  extends ClientEvent
+  final case class TransitionCommand(gameId: String, transition: GameTransition) extends ClientEvent
 
   sealed trait ServerEvent
-  case object Ping                                                                extends ServerEvent
-  case class PlayerState(id: String, balance: Int, games: Vector[GameProjection]) extends ServerEvent
-  case class ActiveGamesState(activeGames: Vector[ActiveGame])                    extends ServerEvent
-  case class GameState(gameId: String, game: GameProjection)                      extends ServerEvent
-  case class ErrorMessage(error: String)                                          extends ServerEvent
+  case object Ping                                                                      extends ServerEvent
+  final case class PlayerState(id: String, balance: Int, games: Vector[GameProjection]) extends ServerEvent
+  final case class ActiveGamesState(activeGames: Vector[ActiveGame])                    extends ServerEvent
+  final case class GameState(gameId: String, game: GameProjection)                      extends ServerEvent
+  final case class ErrorMessage(error: String)                                          extends ServerEvent
 }

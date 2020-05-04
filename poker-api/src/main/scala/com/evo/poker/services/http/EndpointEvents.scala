@@ -39,7 +39,7 @@ class EndpointEvents(actorService: ActorService, repository: UserRepository, enc
   }
 
   private def handlePlayerConnection(user: UserEntity): Flow[Message, Message, Any] = {
-    val playerActor: ActorRef = actorService.playerActor(user)
+    val playerActor: ActorRef = actorService.ensurePlayerActor(user)
     val connectionId: String  = UUID.randomUUID().toString
 
     val (connectionRef: ActorRef, publisher: Publisher[TextMessage.Strict]) = {
