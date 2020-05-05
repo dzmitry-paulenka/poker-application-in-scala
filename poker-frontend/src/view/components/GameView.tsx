@@ -1,14 +1,13 @@
 import {cls} from 'app/controller/Controllers';
+import {PLAYER_COUNT_LIMIT} from 'app/store/GameStore';
 import {rootStore} from 'app/store/RootStore';
 import {TableView} from 'app/view/components/TableView';
 import bind from 'bind-decorator';
 import {observer} from 'mobx-react';
 import * as React from 'react';
-import {Button, Form, Header, Icon, Image, Menu, Modal, Segment, Table} from 'semantic-ui-react';
+import {Button, Form, Header, Icon, Menu, Modal, Segment, Table} from 'semantic-ui-react';
 
 const style = require('./GameView.less');
-
-const PLAYER_COUNT_LIMIT = 7;
 
 @observer
 export class GameView extends React.Component<any, any> {

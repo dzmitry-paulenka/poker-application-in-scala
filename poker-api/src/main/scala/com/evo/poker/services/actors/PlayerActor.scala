@@ -9,6 +9,7 @@ import com.typesafe.scalalogging.Logger
 import scala.concurrent.duration._
 
 import com.evo.poker.logic._
+import com.evo.poker.services.actors.GameActor.{AddBot, RemoveBot}
 import com.evo.poker.services.actors.PlayerActor._
 import com.evo.poker.services.db.{UserEntity, UserRepository}
 import com.evo.poker.services.models.{ActiveGame, GameProjection}
@@ -76,7 +77,7 @@ class PlayerActor(actorService: ActorService, repository: UserRepository, user: 
         case _ =>
       }
 
-      if (game.players.exists(_.id == playerId)) {
+      if (game.hasPlayer(playerId)) {
         if (gameIndex >= 0) {
           currentGames = currentGames.updated(gameIndex, gameProjection);
         } else {
@@ -99,6 +100,16 @@ class PlayerActor(actorService: ActorService, repository: UserRepository, user: 
       case BuyChipsCommand(amount) =>
         addToBalance(amount)
         broadcastPlayerState()
+
+      case AddBotCommand(gameId, botType) =>
+        actorService.gameActor(gameId).foreach { gameActor =>
+          gameActor ! AddBot(botType, connectionId)
+        }
+
+      case RemoveBotCommand(gameId, botId) =>
+        actorService.gameActor(gameId).foreach { gameActor =>
+          gameActor ! RemoveBot(botId, connectionId)
+        }
 
       case CreateGameCommand(name, smallBlind, buyIn) =>
         lobbyActor ! LobbyActor.CreateGame(playerId, name, smallBlind, buyIn, connectionId)
@@ -158,6 +169,8 @@ object PlayerActor {
   sealed trait ClientEvent
   case object Pong                                                               extends ClientEvent
   final case class BuyChipsCommand(amount: Int)                                  extends ClientEvent
+  final case class AddBotCommand(gameId: String, botType: String)                extends ClientEvent
+  final case class RemoveBotCommand(gameId: String, botId: String)               extends ClientEvent
   final case class CreateGameCommand(name: String, smallBlind: Int, buyIn: Int)  extends ClientEvent
   final case class TransitionCommand(gameId: String, transition: GameTransition) extends ClientEvent
 

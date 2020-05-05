@@ -21,6 +21,22 @@ export class BuyChipsCommand implements ClientEvent {
   }
 }
 
+export class AddBotCommand implements ClientEvent {
+  public readonly eventType: string = 'add-bot-command';
+
+  constructor(public readonly gameId: string,
+              public readonly botType: string) {
+  }
+}
+
+export class RemoveBotCommand implements ClientEvent {
+  public readonly eventType: string = 'remove-bot-command';
+
+  constructor(public readonly gameId: string,
+              public readonly botId: string) {
+  }
+}
+
 export class CreateGameCommand implements ClientEvent {
   public readonly eventType: string = 'create-game-command';
 

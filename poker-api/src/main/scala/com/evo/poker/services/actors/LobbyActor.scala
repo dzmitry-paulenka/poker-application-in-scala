@@ -29,7 +29,7 @@ class LobbyActor(actorService: ActorService) extends Actor {
     case GameActor.GameTransitionedEvent(gameRef, gameId, _, _, game) =>
       val index = activeGames.indexWhere(_.id == gameId)
       if (index >= 0) {
-        if (game.players.isEmpty || game.phase == Ended) {
+        if (game.players.count(!_.isBot) == 0 || game.phase == Ended) {
           activeGames = activeGames.filterNot(_.id == gameId)
           gameRef ! PoisonPill
         } else {

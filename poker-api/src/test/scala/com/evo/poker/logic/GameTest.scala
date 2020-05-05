@@ -11,6 +11,9 @@ import com.evo.poker.GameTestHelper
 class GameTest extends AnyFlatSpec with GameTestHelper {
 
   implicit class UnsafeGameOpts(g: Game) {
+    lazy val currentPlayerUnsafe: Player =
+      g.currentPlayer.get
+
     def player(id: String): Player =
       g.requirePlayer(id).right.value
   }
@@ -24,7 +27,7 @@ class GameTest extends AnyFlatSpec with GameTestHelper {
           g.phase shouldBe PreFlop
           g.players.size shouldBe 3
 
-          g.player("a") shouldBe g.currentPlayer
+          g.player("a") shouldBe g.currentPlayerUnsafe
           g.player("b").balance shouldBe 99
           g.player("c").balance shouldBe 98
 
@@ -41,7 +44,7 @@ class GameTest extends AnyFlatSpec with GameTestHelper {
         g <- sampleGame(4, "Ac7c Qs9h KsJh 2h3h 9cKc3h5s9d")
         g <- g.deal()
         g <- validate(g) { g =>
-          g.currentPlayer.id shouldBe "d"
+          g.currentPlayerUnsafe.id shouldBe "d"
           g.check("d").left.value should include("can't check")
         }
         g <- g.fold("d")
@@ -59,7 +62,7 @@ class GameTest extends AnyFlatSpec with GameTestHelper {
           g.player("b").gameBet shouldBe 2
           g.player("c").gameBet shouldBe 2
           g.player("d").sittingOut shouldBe true
-          g.currentPlayer.id shouldBe "b"
+          g.currentPlayerUnsafe.id shouldBe "b"
 
           g.check("a").left.value should include("out of turn")
         }
@@ -78,7 +81,7 @@ class GameTest extends AnyFlatSpec with GameTestHelper {
           g.player("a").gameBet shouldBe 6
           g.player("b").gameBet shouldBe 6
           g.player("c").gameBet shouldBe 6
-          g.currentPlayer.id shouldBe "b"
+          g.currentPlayerUnsafe.id shouldBe "b"
         }
 
         g <- g.check("b")
@@ -93,7 +96,7 @@ class GameTest extends AnyFlatSpec with GameTestHelper {
           g.player("a").gameBet shouldBe 6
           g.player("b").gameBet shouldBe 6
           g.player("c").gameBet shouldBe 6
-          g.currentPlayer.id shouldBe "b"
+          g.currentPlayerUnsafe.id shouldBe "b"
         }
 
         g <- g.raise("b", 4)

@@ -37,14 +37,15 @@ export class TableView extends React.Component<any, any> {
   }
 
   render() {
-    const {currentGame, thisPlayer, cardsDealt, isShowdown} = rootStore.game;
+    const {currentGame, thisPlayer, cardsDealt, isShowdown, canAddBot} = rootStore.game;
     const {canFold, canCheck, canCall} = rootStore.game;
 
     Assert.yes(currentGame, 'currentGame should be defined at this point');
     Assert.yes(thisPlayer, 'thisPlayer should be defined at this point');
 
-    const card0 = cardsDealt && thisPlayer.hand[0];
-    const card1 = cardsDealt && thisPlayer.hand[1];
+    const hasCards = thisPlayer.hand.length > 0
+    const card0 = hasCards && thisPlayer.hand[0];
+    const card1 = hasCards && thisPlayer.hand[1];
     const players = currentGame.players;
 
     return (
@@ -66,8 +67,8 @@ export class TableView extends React.Component<any, any> {
 
         <div className={style.bottom}>
           <div className={style.cards}>
-            {this.renderCard(card0, cardsDealt ? 'front' : 'missing', 100)}
-            {this.renderCard(card1, cardsDealt ? 'front' : 'missing', 100)}
+            {this.renderCard(card0, hasCards ? 'front' : 'missing', 100)}
+            {this.renderCard(card1, hasCards ? 'front' : 'missing', 100)}
           </div>
 
           <div className={style.buttons}>
@@ -80,7 +81,13 @@ export class TableView extends React.Component<any, any> {
           {isShowdown && <Button className={style.nextRound}
                                  content='Next round'
                                  icon='arrow right' labelPosition='right'
-                                 onClick={() => cls.games.nextRound(currentGame.id)}
+                                 onClick={() => cls.games.nextRound()}
+          />}
+
+          {canAddBot && <Button className={style.addBot}
+                                content='AddBot'
+                                icon='plus' labelPosition='right'
+                                onClick={() => cls.games.addBot('Caller')}
           />}
 
           <Button className={style.leave}
@@ -138,6 +145,7 @@ export class TableView extends React.Component<any, any> {
     const isDealer = player == dealerPlayer;
     const isCurrent = player == currentPlayer;
     const isSelf = player == thisPlayer;
+    const isBot = player.isBot;
     const showHand = cardsDealt && !isSelf && !player.sittingOut;
     const showCombo = !!player.resultComboName;
 
@@ -158,7 +166,7 @@ export class TableView extends React.Component<any, any> {
           {this.renderCard(card1, cardStatus, 30)}
         </div>}
         <div className={style.badge}>
-          <div className={style.name}>{player.id}</div>
+          <div className={style.name}>{player.name}</div>
           <div className={style.balance}>$&nbsp;{player.balance}</div>
         </div>
         <div className={style.money}>
@@ -169,6 +177,7 @@ export class TableView extends React.Component<any, any> {
           {player.resultComboName}
         </div>}
         {isDealer && <Image className={style.dealer} src={`assets/chip-dealer.png`}/>}
+        {isBot && <Icon className={style.kick} link name='close' onClick={() => cls.games.removeBot(player.id)}/>}
       </div>
     )
   }

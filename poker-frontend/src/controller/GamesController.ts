@@ -1,4 +1,4 @@
-import {CreateGameCommand, GameTransition, TransitionCommand} from 'app/controller/ConnectionController';
+import {AddBotCommand, CreateGameCommand, GameTransition, RemoveBotCommand, TransitionCommand} from 'app/controller/ConnectionController';
 import {cls} from 'app/controller/Controllers';
 import {ActiveGame, Game} from 'app/store/GameStore';
 import {rootStore} from 'app/store/RootStore';
@@ -157,9 +157,25 @@ export class GamesController {
   }
 
   @action.bound
-  public nextRound(gameId: string): void {
-    const {playerId} = rootStore.game;
-    this.transitionGame(gameId, {
+  public addBot(botType: string): void {
+    const {currentGame} = rootStore.game;
+    cls.connection.send(
+      new AddBotCommand(currentGame.id, botType)
+    );
+  }
+
+  @action.bound
+  public removeBot(botId: string): void {
+    const {currentGame} = rootStore.game;
+    cls.connection.send(
+      new RemoveBotCommand(currentGame.id, botId)
+    );
+  }
+
+  @action.bound
+  public nextRound(): void {
+    const {currentGame} = rootStore.game;
+    this.transitionGame(currentGame.id, {
       transition: 'next-round'
     })
   }

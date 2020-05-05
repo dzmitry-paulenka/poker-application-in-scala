@@ -21,8 +21,11 @@ final case class Game(
   dealerPlayerIndex: Int = -1
 ) {
 
-  lazy val currentPlayer: Player =
-    activePlayers(currentPlayerIndex)
+  lazy val currentPlayer: Option[Player] =
+    if (currentPlayerIndex >= 0 && activePlayers.nonEmpty)
+      Some(activePlayers(currentPlayerIndex))
+    else
+      None
 
   lazy val dealerPlayer: Player =
     activePlayers(dealerPlayerIndex)
@@ -30,6 +33,15 @@ final case class Game(
   lazy val activePlayers: Vector[Player] = {
     players.filterNot(_.sittingOut)
   }
+
+  def isCurrentPlayer(playerId: String): Boolean =
+    currentPlayer.exists(_.id == playerId)
+
+  def player(playerId: String): Option[Player] =
+    players.find(_.id == playerId)
+
+  def hasPlayer(playerId: String): Boolean =
+    player(playerId).isDefined
 
   def activePlayer(playerId: String): Player =
     activePlayers.find(_.id == playerId).get
@@ -44,7 +56,7 @@ final case class Game(
     for {
       player <- requirePlayer(playerId)
       _ <- Either.cond(
-        player.id == currentPlayer.id,
+        isCurrentPlayer(playerId),
         player,
         s"Player with id: $playerId, is trying to make a move out of turn"
       )
@@ -158,7 +170,7 @@ final case class Game(
   def join(playerId: String): OrError[Game] = {
     if (phase == Ended)
       s"Can't join after the game is ended".asLeft
-    else if (players.exists(_.id == playerId))
+    else if (hasPlayer(playerId))
       this.asRight
     else if (players.size == rules.playersLimit)
       s"Game already has the maximum number of players".asLeft
@@ -169,7 +181,7 @@ final case class Game(
   }
 
   def leave(playerId: String): OrError[Game] = {
-    if (currentPlayerIndex >= 0 && playerId == currentPlayer.id)
+    if (currentPlayerIndex >= 0 && isCurrentPlayer(playerId))
       fold(playerId).flatMap(_.leave(playerId))
     else
       for {

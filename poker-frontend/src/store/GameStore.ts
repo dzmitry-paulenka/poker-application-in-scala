@@ -1,18 +1,9 @@
-import {rootStore} from 'app/store/RootStore';
 import {Assert} from 'app/util/Assert';
 import {computed, observable} from 'mobx';
-import {
-  createModelSchema,
-  primitive,
-  reference,
-  list,
-  object,
-  identifier,
-  serialize,
-  deserialize,
-  getDefaultModelSchema,
-  serializable
-} from 'serializr'
+import {list, object, serializable} from 'serializr'
+
+export const PLAYER_COUNT_LIMIT = 7;
+export const BOT_ID_REGEX: RegExp = /^BOT-\[(\w+)]-(\d+)$/;
 
 export class Card {
   @serializable
@@ -77,6 +68,20 @@ export class Player {
   @observable
   @serializable
   public sittingOut: Boolean;
+
+  @computed
+  get name(): string {
+    const botName = this.id.match(BOT_ID_REGEX)
+    if (botName) {
+      return `${botName[1]}-${botName[2]}`;
+    }
+    return this.id;
+  }
+
+  @computed
+  get isBot(): boolean {
+    return !!this.id.match(BOT_ID_REGEX)
+  }
 }
 
 export enum Phase {
@@ -258,12 +263,17 @@ export class GameStore {
 
   @computed
   get cardsDealt(): boolean {
-    return this.thisPlayer && this.thisPlayer.hand.length > 0;
+    return this.currentGame && this.currentGame.phase != 'pre-deal';
   }
 
   @computed
   get isShowdown(): boolean {
     return this.currentGame && this.currentGame.phase == 'showdown'
+  }
+
+  @computed
+  get canAddBot(): boolean {
+    return this.currentGame && this.currentGame.players.length < PLAYER_COUNT_LIMIT
   }
 
   public thisPlayerIsInGame(gameId: string): boolean {

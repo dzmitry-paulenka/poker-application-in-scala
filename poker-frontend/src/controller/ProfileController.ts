@@ -55,7 +55,7 @@ export class ProfileController {
     );
   }
 
-  public async httpPost(url: String, data: any): Promise<any> {
+  public async httpPost(url: string, data: any): Promise<any> {
     const requestUrl = `${Config.usersApiUrl()}/${url}`;
     const response = await fetch(requestUrl, {
       redirect: 'manual',
