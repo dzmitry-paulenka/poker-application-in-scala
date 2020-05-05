@@ -14,7 +14,7 @@ class GameTest extends AnyFlatSpec with GameTestHelper {
     lazy val currentPlayerUnsafe: Player =
       g.currentPlayer.get
 
-    def player(id: String): Player =
+    def playerUnsafe(id: String): Player =
       g.requirePlayer(id).right.value
   }
 
@@ -27,9 +27,9 @@ class GameTest extends AnyFlatSpec with GameTestHelper {
           g.phase shouldBe PreFlop
           g.players.size shouldBe 3
 
-          g.player("a") shouldBe g.currentPlayerUnsafe
-          g.player("b").balance shouldBe 99
-          g.player("c").balance shouldBe 98
+          g.playerUnsafe("a") shouldBe g.currentPlayerUnsafe
+          g.playerUnsafe("b").balance shouldBe 99
+          g.playerUnsafe("c").balance shouldBe 98
 
           g.pot shouldBe 3
           g.roundBet shouldBe 2
@@ -58,10 +58,10 @@ class GameTest extends AnyFlatSpec with GameTestHelper {
           g.board shouldBe cards("9cKc3h")
 
           g.activePlayers.length shouldBe 3
-          g.player("a").gameBet shouldBe 2
-          g.player("b").gameBet shouldBe 2
-          g.player("c").gameBet shouldBe 2
-          g.player("d").sittingOut shouldBe true
+          g.playerUnsafe("a").gameBet shouldBe 2
+          g.playerUnsafe("b").gameBet shouldBe 2
+          g.playerUnsafe("c").gameBet shouldBe 2
+          g.playerUnsafe("d").sittingOut shouldBe true
           g.currentPlayerUnsafe.id shouldBe "b"
 
           g.check("a").left.value should include("out of turn")
@@ -78,9 +78,9 @@ class GameTest extends AnyFlatSpec with GameTestHelper {
           g.board shouldBe cards("9cKc3h5s")
 
           g.activePlayers.length shouldBe 3
-          g.player("a").gameBet shouldBe 6
-          g.player("b").gameBet shouldBe 6
-          g.player("c").gameBet shouldBe 6
+          g.playerUnsafe("a").gameBet shouldBe 6
+          g.playerUnsafe("b").gameBet shouldBe 6
+          g.playerUnsafe("c").gameBet shouldBe 6
           g.currentPlayerUnsafe.id shouldBe "b"
         }
 
@@ -93,9 +93,9 @@ class GameTest extends AnyFlatSpec with GameTestHelper {
           g.board shouldBe cards("9cKc3h5s9d")
 
           g.activePlayers.length shouldBe 3
-          g.player("a").gameBet shouldBe 6
-          g.player("b").gameBet shouldBe 6
-          g.player("c").gameBet shouldBe 6
+          g.playerUnsafe("a").gameBet shouldBe 6
+          g.playerUnsafe("b").gameBet shouldBe 6
+          g.playerUnsafe("c").gameBet shouldBe 6
           g.currentPlayerUnsafe.id shouldBe "b"
         }
 
@@ -108,12 +108,12 @@ class GameTest extends AnyFlatSpec with GameTestHelper {
           g.board shouldBe cards("9cKc3h5s9d")
 
           g.activePlayers.length shouldBe 2
-          g.player("b").gameBet shouldBe 10
-          g.player("b").resultMoneyWon shouldBe 26
+          g.playerUnsafe("b").gameBet shouldBe 10
+          g.playerUnsafe("b").resultMoneyWon shouldBe 26
 
-          g.player("c").gameBet shouldBe 10
+          g.playerUnsafe("c").gameBet shouldBe 10
 
-          g.player("a").sittingOut shouldBe true
+          g.playerUnsafe("a").sittingOut shouldBe true
 
           g.currentPlayerIndex shouldBe -1
         }
@@ -128,9 +128,9 @@ class GameTest extends AnyFlatSpec with GameTestHelper {
           g.currentPlayerIndex shouldBe -1
           g.dealerPlayerIndex shouldBe 0
 
-          g.player("b").balance shouldBe 116
-          g.player("c").balance shouldBe 90
-          g.player("d").balance shouldBe 100
+          g.playerUnsafe("b").balance shouldBe 116
+          g.playerUnsafe("c").balance shouldBe 90
+          g.playerUnsafe("d").balance shouldBe 100
         }
 
         g <- g.deal()
@@ -168,7 +168,7 @@ class GameTest extends AnyFlatSpec with GameTestHelper {
       ng.currentPlayerIndex shouldBe -1
       ng.players.size shouldBe 1
 
-      val aPlayer = ng.player("a")
+      val aPlayer = ng.playerUnsafe("a")
       aPlayer.balance shouldBe balance
       aPlayer.hand shouldBe Nil
       aPlayer.gameBet shouldBe 0
